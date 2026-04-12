@@ -87,9 +87,9 @@ public class ConsoleUI {
         btn.addActionListener(e -> cardLayout.show(mainPanel, text));
         buttonPanel.add(btn);
         if (text.equals("DASHBOARD")) {
-        mainPanel.add(createDashboard(), text); // Uses the new dashboard layout
+        mainPanel.add(createDashboard(), text); 
     } else {
-        mainPanel.add(createPage(text), text);    // Uses the generic layout for others
+        mainPanel.add(createPage(text), text);  
     }
 }
     
@@ -215,7 +215,7 @@ leftColumn.add(capabilityMap, BorderLayout.CENTER);
     
 
 
-    leftColumn.add(alertsPanel, BorderLayout.NORTH); // Pins to top
+    leftColumn.add(alertsPanel, BorderLayout.NORTH); 
 leftColumn.add(capabilityMap, BorderLayout.CENTER);
 
 
@@ -310,7 +310,7 @@ private JPanel createSectionPanel(String title) {
 
     card.add(nameLabel, BorderLayout.NORTH);
     card.add(statusLabel, BorderLayout.CENTER);
-    card.add(mugLabel, BorderLayout.EAST); // Puts the "6 MUGS" box on the right
+    card.add(mugLabel, BorderLayout.EAST); 
 
     return card;
 }

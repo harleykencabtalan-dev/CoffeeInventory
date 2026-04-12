@@ -13,9 +13,9 @@ public class InventoryManager {
     private final List<String>             alertMessages = new ArrayList<>();
     private final List<Ingredient>         lowStockList  = new ArrayList<>();
 
-    // =========================================================================
+   
     //  CONSTRUCTOR
-    // =========================================================================
+   
 
     public InventoryManager() {
         ingredients = DatabaseManager.loadIngredients();
@@ -29,9 +29,9 @@ public class InventoryManager {
         refreshAlerts();
     }
 
-    // =========================================================================
+    
     //  VALIDATE PRODUCTION
-    // =========================================================================
+    
 
     public String validateProduction(CoffeeType coffee, int qty) {
         for (Map.Entry<Ingredient, Double> entry : coffee.getRecipe().entrySet()) {
@@ -47,9 +47,9 @@ public class InventoryManager {
         return null;
     }
 
-    // =========================================================================
+
     //  PRODUCE
-    // =========================================================================
+ 
 
     public void produce(CoffeeType coffee, int qty) {
         for (Map.Entry<Ingredient, Double> entry : coffee.getRecipe().entrySet()) {
@@ -68,9 +68,9 @@ public class InventoryManager {
         }
     }
 
-    // =========================================================================
+
     //  REFILL
-    // =========================================================================
+ 
 
     public void refill(Ingredient ingredient, double amount) {
         currentStock.put(ingredient,     currentStock.getOrDefault(ingredient, 0.0)     + amount);
@@ -83,9 +83,9 @@ public class InventoryManager {
         DatabaseManager.saveStock(ingredient, currentStock.get(ingredient), theoreticalStock.get(ingredient));
     }
 
-    // =========================================================================
+
     //  VARIANCE
-    // =========================================================================
+
 
     public Map<Ingredient, Double> calculateVariance(Map<Ingredient, Double> physicalCounts) {
         Map<Ingredient, Double> variance = new HashMap<>();
@@ -97,9 +97,9 @@ public class InventoryManager {
         return variance;
     }
 
-    // =========================================================================
+  
     //  MAX PRODUCIBLE
-    // =========================================================================
+    
 
     public int maxProducible(CoffeeType coffee) {
         int max = Integer.MAX_VALUE;
@@ -113,9 +113,9 @@ public class InventoryManager {
         return (max == Integer.MAX_VALUE) ? 0 : max;
     }
 
-    // =========================================================================
+
     //  RELOAD - call after adding/removing ingredients or coffee types
-    // =========================================================================
+    
 
     public void reload() {
         ingredients = DatabaseManager.loadIngredients();
@@ -129,9 +129,9 @@ public class InventoryManager {
         refreshAlerts();
     }
 
-    // =========================================================================
+    
     //  ALERTS
-    // =========================================================================
+
 
     private void refreshAlerts() {
         alertMessages.clear();
@@ -149,9 +149,9 @@ public class InventoryManager {
         }
     }
 
-    // =========================================================================
+   
     //  GETTERS
-    // =========================================================================
+  
 
     public double                   getStock(Ingredient ing)            { return currentStock.getOrDefault(ing, 0.0);     }
     public double                   getTheoreticalStock(Ingredient ing) { return theoreticalStock.getOrDefault(ing, 0.0); }
