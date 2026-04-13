@@ -155,7 +155,7 @@ JLabel lblSubText = new JLabel(subText);
 
     static JPanel createSectionPanel(String title) {
         JPanel panel = new JPanel(new BorderLayout());
-        panel.setBackground(new Color(240, 235, 225));
+        panel.setBackground(new Color(250, 250, 250));
         panel.setBorder(BorderFactory.createLineBorder(new Color(210, 200, 180)));
 
         JLabel label = new JLabel(title);

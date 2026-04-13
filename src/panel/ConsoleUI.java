@@ -100,7 +100,7 @@ private final Color COLOR_BG      = new Color(245, 245, 240); // Off-white/Cream
 
         JPanel panel = switch (text) {
             case "DASHBOARD" -> new DashboardPanel(inventoryManager);
-            //  case "PRODUCTION"  -> new ProductionPanel(inventoryManager);
+             case "PRODUCTION"  -> new ProductionPanel(inventoryManager);
             // case "INVENTORY"   -> new InventoryPanel(inventoryManager);
             // case "REFILLS"     -> new RefillPanel(inventoryManager);
             // case "SYSTEM LOGS" -> new LogsPanel(inventoryManager);
