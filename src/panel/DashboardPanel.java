@@ -4,17 +4,27 @@ import java.awt.*;
 public class DashboardPanel extends JPanel {
 
     private final InventoryManager inventoryManager;
+    private final Color COLOR_BG     = new Color(245, 245, 240);
+    private final Color COLOR_CARD   = Color.WHITE;
+    private final Color COLOR_TEXT   = new Color(80, 70, 60);
+    private final Color COLOR_KHAKI  = new Color(225, 215, 195);
+    private final Color COLOR_BROWN  = new Color(120, 90, 70);
+    
 
     public DashboardPanel(InventoryManager inventoryManager) {
         this.inventoryManager = inventoryManager;
         setLayout(new BorderLayout(20, 20));
-        setBackground(new Color(5, 10, 15));
+        setBackground(new Color(245, 245, 240));
         setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
         build();
     }
 
     private void build() {
         // --- HEADER ---
+        
+        setBackground(COLOR_BG); 
+    
+   
         JPanel overviewContainer = new JPanel(new BorderLayout(0, 10));
         overviewContainer.setOpaque(false);
 
@@ -22,11 +32,11 @@ public class DashboardPanel extends JPanel {
         headerPanel.setOpaque(false);
 
         JLabel titleLabel = new JLabel("SYSTEM OVERVIEW");
-        titleLabel.setForeground(new Color(0, 255, 255));
-        titleLabel.setFont(new Font("SansSerif", Font.BOLD, 40));
+        titleLabel.setForeground(COLOR_BROWN);
+         titleLabel.setFont(new Font("SansSerif", Font.BOLD, 40));
 
         JLabel subStatusLabel = new JLabel(">_ STATUS: NOMINAL | LAST UPDATE: 11:26:50 PM");
-        subStatusLabel.setForeground(new Color(100, 150, 150));
+        subStatusLabel.setForeground(new Color(150, 140, 130));
         subStatusLabel.setFont(new Font("Monospaced", Font.PLAIN, 20));
 
         headerPanel.add(titleLabel, BorderLayout.NORTH);
@@ -44,11 +54,10 @@ public class DashboardPanel extends JPanel {
         }
         int productionToday = inventoryManager.getProductionLog().size();
 
-        statsRow.add(createStatCard("TOTAL INGREDIENTS",  String.valueOf(totalIngredients), "Active tracked items", new Color(0, 255, 255)));
-        statsRow.add(createStatCard("CRITICAL STOCK",     String.valueOf(criticalCount),    "Below threshold",      Color.WHITE));
-        statsRow.add(createStatCard("OUT OF STOCK",       String.valueOf(outOfStockCount),  "Depleted items",       new Color(255, 50, 50)));
-        statsRow.add(createStatCard("TODAY'S PRODUCTION", String.valueOf(productionToday),  "Completed runs",       new Color(50, 255, 50)));
-
+        statsRow.add(createStatCard("TOTAL INGREDIENTS",  String.valueOf(totalIngredients), "Active tracked items", COLOR_BROWN));
+        statsRow.add(createStatCard("CRITICAL STOCK",     String.valueOf(criticalCount),    "Below threshold",      new Color(160, 100, 40)));
+        statsRow.add(createStatCard("OUT OF STOCK",       String.valueOf(outOfStockCount),  "Depleted items",new Color(180, 80, 80)));
+        statsRow.add(createStatCard("TODAY'S PRODUCTION", String.valueOf(productionToday),  "Completed runs",     new Color(80, 120, 80)));
         overviewContainer.add(headerPanel, BorderLayout.NORTH);
         overviewContainer.add(statsRow,    BorderLayout.CENTER);
 
@@ -62,13 +71,15 @@ public class DashboardPanel extends JPanel {
 
         JPanel alertsContent = new JPanel();
         alertsContent.setLayout(new BoxLayout(alertsContent, BoxLayout.Y_AXIS));
-        alertsContent.setOpaque(false);
+        alertsContent.setBackground(COLOR_CARD);
+        alertsContent.setOpaque(true);
+
 
         for (String alert : inventoryManager.getAlerts()) {
-            JLabel alertLabel = new JLabel(alert.toUpperCase());
-            alertLabel.setForeground(new Color(255, 100, 100));
+            JLabel alertLabel = new JLabel("• " + alert.toUpperCase());
+            alertLabel.setForeground(new Color(180, 80, 90));
             alertLabel.setFont(new Font("Monospaced", Font.BOLD, 20));
-            alertLabel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
+            alertLabel.setBorder(BorderFactory.createEmptyBorder(5, 15, 5, 10));
             alertsContent.add(alertLabel);
         }
 
@@ -111,41 +122,46 @@ public class DashboardPanel extends JPanel {
 
     private JPanel createStatCard(String title, String value, String subText, Color accentColor) {
         JPanel card = new JPanel(new BorderLayout(0, 5));
-        card.setBackground(new Color(15, 25, 35));
-        card.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(new Color(30, 40, 50), 1),
-            BorderFactory.createEmptyBorder(15, 15, 15, 15)
-        ));
+        card.setBackground(COLOR_CARD);
+      card.setBorder(BorderFactory.createLineBorder(new Color(220, 210, 200), 1));
+        
+JPanel inner = new JPanel(new BorderLayout(0, 5));
+    inner.setOpaque(false);
+    inner.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
 
         JLabel lblTitle = new JLabel(title);
-        lblTitle.setForeground(new Color(150, 150, 150));
-        lblTitle.setFont(new Font("SansSerif", Font.BOLD, 10));
+    lblTitle.setForeground(new Color(140, 130, 120)); 
+    lblTitle.setFont(new Font("SansSerif", Font.BOLD, 11));
 
-        JLabel lblValue = new JLabel(value);
-        lblValue.setForeground(Color.WHITE);
-        lblValue.setFont(new Font("SansSerif", Font.BOLD, 32));
 
-        JLabel lblSubText = new JLabel(subText);
-        lblSubText.setForeground(new Color(100, 100, 100));
-        lblSubText.setFont(new Font("SansSerif", Font.PLAIN, 15));
+      JLabel lblValue = new JLabel(value);
+    lblValue.setForeground(accentColor); 
+    lblValue.setFont(new Font("SansSerif", Font.BOLD, 36));
 
-        JPanel centerVal = new JPanel(new BorderLayout());
-        centerVal.setOpaque(false);
-        centerVal.add(lblValue,   BorderLayout.CENTER);
-        centerVal.add(lblSubText, BorderLayout.SOUTH);
+JLabel lblSubText = new JLabel(subText);
+    lblSubText.setForeground(new Color(160, 160, 160));
+    lblSubText.setFont(new Font("SansSerif", Font.PLAIN, 13));
 
-        card.add(lblTitle,  BorderLayout.NORTH);
-        card.add(centerVal, BorderLayout.CENTER);
-        return card;
-    }
+
+       inner.add(lblTitle, BorderLayout.NORTH);
+    inner.add(lblValue, BorderLayout.CENTER);
+    inner.add(lblSubText, BorderLayout.SOUTH);
+    
+    card.add(inner);
+    return card;
+}
+
+
 
     static JPanel createSectionPanel(String title) {
         JPanel panel = new JPanel(new BorderLayout());
-        panel.setBackground(new Color(10, 15, 25));
-        panel.setBorder(BorderFactory.createLineBorder(new Color(25, 35, 45)));
+        panel.setBackground(new Color(240, 235, 225));
+        panel.setBorder(BorderFactory.createLineBorder(new Color(210, 200, 180)));
 
         JLabel label = new JLabel(title);
-        label.setForeground(new Color(0, 255, 255));
+
+       label.setForeground(new Color(200, 50, 50));
+
         label.setFont(new Font("SansSerif", Font.BOLD, 25));
         label.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 

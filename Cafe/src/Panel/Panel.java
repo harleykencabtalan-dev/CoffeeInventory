@@ -1,13 +1,13 @@
 import javax.swing.*;
 import java.awt.*;
 
-public class ConsoleUI {
+public class Panel {
     private JPanel mainPanel;
     private CardLayout cardLayout;
     private JPanel buttonPanel;
     private InventoryManager inventoryManager;
 
-    public ConsoleUI(InventoryManager inventoryManager) {
+    public Panel(InventoryManager inventoryManager) {
         this.inventoryManager = inventoryManager;
         cardLayout = new CardLayout();
         mainPanel = new JPanel(cardLayout);
