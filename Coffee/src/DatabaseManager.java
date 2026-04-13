@@ -144,7 +144,7 @@ public class DatabaseManager {
     }
 
 
-    //  SAVE STOCK
+    //  SAVE STOCK  
     
 
     public static void saveStock(Ingredient ingredient,

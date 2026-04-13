@@ -155,12 +155,12 @@ public class InventoryManager {
 
     public double                   getStock(Ingredient ing)            { return currentStock.getOrDefault(ing, 0.0);     }
     public double                   getTheoreticalStock(Ingredient ing) { return theoreticalStock.getOrDefault(ing, 0.0); }
-    public List<Ingredient>         getIngredients()                    { return ingredients;                             }
-    public List<CoffeeType>         getCoffeeTypes()                    { return coffeeTypes;                             }
-    public Stack<ProductionRecord>  getProductionLog()                  { return productionLog;                           }
-    public LinkedList<RefillRecord> getRefillLog()                      { return refillLog;                               }
-    public List<String>             getAlerts()                         { return alertMessages;                           }
-    public boolean                  hasAlerts()                         { return !alertMessages.isEmpty();                }
-    public List<Ingredient>         getLowStockList()                   { return lowStockList;                            }
-    public int                      getLowStockCount()                  { return lowStockList.size();                     }
+    public List<Ingredient>         getIngredients()                    { return ingredients;}
+    public List<CoffeeType>         getCoffeeTypes()                    { return coffeeTypes;}
+    public Stack<ProductionRecord>  getProductionLog()                  { return productionLog;}
+    public LinkedList<RefillRecord> getRefillLog()                      { return refillLog;}
+    public List<String>             getAlerts()                         { return alertMessages;}
+    public boolean                  hasAlerts()                         { return !alertMessages.isEmpty();}
+    public List<Ingredient>         getLowStockList()                   { return lowStockList;}
+    public int                      getLowStockCount()                  { return lowStockList.size();}
 }

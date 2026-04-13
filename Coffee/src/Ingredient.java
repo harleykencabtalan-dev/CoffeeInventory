@@ -19,12 +19,12 @@ public class Ingredient {
         this.theoreticalStock  = theoreticalStock;
     }
 
-    public int    getId()                 { return id;                }
-    public String getDisplayName()        { return name;              }
-    public String getUnit()               { return unit;              }
+    public int    getId()                 { return id; }
+    public String getDisplayName()        { return name; }
+    public String getUnit()               { return unit;}
     public double getLowStockThreshold()  { return lowStockThreshold; }
-    public double getCurrentStock()       { return currentStock;      }
-    public double getTheoreticalStock()   { return theoreticalStock;  }
+    public double getCurrentStock()       { return currentStock;}
+    public double getTheoreticalStock()   { return theoreticalStock;}
 
     @Override
     public String toString() { return name; }
