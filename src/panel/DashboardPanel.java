@@ -93,7 +93,8 @@ public class DashboardPanel extends JPanel {
         JPanel capabilityMap = createSectionPanel("☕ PRODUCTION CAPABILITY MAP");
 
         JPanel grid = new JPanel(new GridLayout(2, 2, 15, 15));
-        grid.setOpaque(false);
+       grid.setOpaque(true); 
+grid.setBackground(java.awt.Color.WHITE);
         grid.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
         for (CoffeeType coffee : inventoryManager.getCoffeeTypes()) {
@@ -170,16 +171,20 @@ JLabel lblSubText = new JLabel(subText);
     }
 
     private JPanel createCoffeeCard(String name, String mugs, String status) {
-        JPanel card = new JPanel(new BorderLayout());
-        card.setBackground(new Color(15, 25, 35));
+   JPanel card = new JPanel();
+    card.setLayout(new BorderLayout());
+        card.setBackground(new Color(120, 90, 70));
+        card.setOpaque(true);
+
         card.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(new Color(30, 40, 50)),
-            BorderFactory.createEmptyBorder(10, 10, 10, 10)
-        ));
+        BorderFactory.createLineBorder(new Color(200, 200, 200)),
+        BorderFactory.createEmptyBorder(10, 10, 10, 10)
+    ));
+      
 
         JLabel nameLabel = new JLabel(name);
-        nameLabel.setForeground(Color.WHITE);
-        nameLabel.setFont(new Font("SansSerif", Font.BOLD, 12));
+    nameLabel.setForeground(new Color(60, 60, 60)); // Dark Gray
+    nameLabel.setFont(new Font("SansSerif", Font.BOLD, 14));
 
         JLabel statusLabel = new JLabel(status);
         statusLabel.setForeground(new Color(100, 150, 100));
