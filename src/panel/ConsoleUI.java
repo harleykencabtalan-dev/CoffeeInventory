@@ -6,7 +6,8 @@ public class ConsoleUI {
     private CardLayout cardLayout;
     private JPanel buttonPanel;
     private InventoryManager inventoryManager;
-    
+    private DashboardPanel dashboardPanel;
+
 private final Color COLOR_BG      = new Color(245, 245, 240); // Off-white/Cream
     private final Color COLOR_SIDEBAR = new Color(245, 245, 240); // Soft Khaki
     private final Color COLOR_ACCENT  = new Color(120, 90, 70);   // Coffee Brown
@@ -34,7 +35,7 @@ private final Color COLOR_BG      = new Color(245, 245, 240); // Off-white/Cream
         brandPanel.setOpaque(false);
         brandPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
-        JLabel logoLabel = new JLabel("☕ CAFÉ OS");
+        JLabel logoLabel = new JLabel("☕ VAULTREX");
         logoLabel.setForeground(new Color(60, 60, 60)); // Dark Gray text
         logoLabel.setFont(new Font("SansSerif", Font.BOLD, 22));
 
@@ -95,14 +96,24 @@ private final Color COLOR_BG      = new Color(245, 245, 240); // Off-white/Cream
             }
         });
 
-        btn.addActionListener(e -> cardLayout.show(mainPanel, text));
+        btn.addActionListener(e -> {
+    if (text.equals("DASHBOARD")) {
+        dashboardPanel.refresh();
+    }
+    cardLayout.show(mainPanel, text);
+});
+
         buttonPanel.add(btn);
 
         JPanel panel = switch (text) {
-            case "DASHBOARD" -> new DashboardPanel(inventoryManager);
+         case "DASHBOARD" -> {
+    dashboardPanel = new DashboardPanel(inventoryManager);
+    yield dashboardPanel;
+}
+
              case "PRODUCTION"  -> new ProductionPanel(inventoryManager);
             // case "INVENTORY"   -> new InventoryPanel(inventoryManager);
-            // case "REFILLS"     -> new RefillPanel(inventoryManager);
+             case "REFILLS"     -> new RefillPanel(inventoryManager);
             // case "SYSTEM LOGS" -> new LogsPanel(inventoryManager);
             // case "RECIPES"     -> new RecipePanel(inventoryManager);
             // case "INGREDIENTS" -> new IngredientPanel(inventoryManager);

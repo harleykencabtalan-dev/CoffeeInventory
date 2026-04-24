@@ -48,7 +48,7 @@ public class DatabaseManager {
                 int    id   = (int) Double.parseDouble(extractValue(entry, "id"));
                 String name = extractValue(entry, "name");
 
-                // Load this coffee type's recipe
+              
                 Map<Ingredient, Double> recipe = loadRecipe(id, ingredients);
                 list.add(new CoffeeType(id, name, recipe));
             }
@@ -64,6 +64,7 @@ public class DatabaseManager {
         Map<Ingredient, Double> recipe = new HashMap<>();
         try {
             String response = get("get_recipe.php?coffee_type_id=" + coffeeTypeId);
+            
             String[] entries = response.replace("[","").replace("]","").split("\\},\\{");
             for (String entry : entries) {
                 entry = entry.replace("{","").replace("}","").trim();
@@ -116,7 +117,7 @@ public class DatabaseManager {
 
     public static void addCoffeeType(String name, Map<Integer, Double> recipe) {
         try {
-            // 1. Insert the coffee type, get back its new id
+           
             String response = post("add_coffee_type.php", "name=" + encode(name));
             int newId = (int) Double.parseDouble(response.trim());
 

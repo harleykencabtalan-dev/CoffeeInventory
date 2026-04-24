@@ -1,6 +1,7 @@
 import javax.swing.*;
 import java.awt.*;
 
+
 public class DashboardPanel extends JPanel {
 
     private final InventoryManager inventoryManager;
@@ -11,6 +12,7 @@ public class DashboardPanel extends JPanel {
     private final Color COLOR_BROWN  = new Color(120, 90, 70);
     
 
+    
     public DashboardPanel(InventoryManager inventoryManager) {
         this.inventoryManager = inventoryManager;
         setLayout(new BorderLayout(20, 20));
@@ -18,6 +20,14 @@ public class DashboardPanel extends JPanel {
         setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
         build();
     }
+
+
+    public void refresh() {
+    removeAll();
+    build();
+    revalidate();
+    repaint();
+}
 
     private void build() {
         // --- HEADER ---
@@ -98,7 +108,7 @@ grid.setBackground(java.awt.Color.WHITE);
         grid.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
         for (CoffeeType coffee : inventoryManager.getCoffeeTypes()) {
-            int max    = inventoryManager.maxProducible(coffee);
+       int max = inventoryManager.maxProducible(coffee, 1.0);
             String status = max > 0 ? "SUPPLY ABUNDANT" : "CANNOT PRODUCE";
             grid.add(createCoffeeCard(coffee.getDisplayName(), max + " MUGS", status));
         }
@@ -112,6 +122,42 @@ grid.setBackground(java.awt.Color.WHITE);
 
         // Activity log (right)
         JPanel logPanel = createSectionPanel(">_ SYSTEM ACTIVITY LOG");
+        JPanel logContent = new JPanel();
+logContent.setLayout(new BoxLayout(logContent, BoxLayout.Y_AXIS));
+logContent.setBackground(Color.WHITE);
+logContent.setOpaque(true);
+
+// Production logs
+for (ProductionRecord rec : inventoryManager.getProductionLog()) {
+    JLabel entry = new JLabel("☕ Produced " + rec.getQuantity() + "× " + rec.getCoffeeName());
+    entry.setForeground(new Color(80, 120, 80));
+    entry.setFont(new Font("Monospaced", Font.PLAIN, 12));
+    entry.setBorder(BorderFactory.createEmptyBorder(4, 10, 4, 10));
+    logContent.add(entry);
+}
+
+// Refill logs
+for (RefillRecord rec : inventoryManager.getRefillLog()) {
+    JLabel entry = new JLabel("🔄 Refilled " + rec.getAmount() + " " + rec.getIngredient().getUnit() + " of " + rec.getIngredient().getDisplayName());
+    entry.setForeground(new Color(80, 100, 160));
+    entry.setFont(new Font("Monospaced", Font.PLAIN, 12));
+    entry.setBorder(BorderFactory.createEmptyBorder(4, 10, 4, 10));
+    logContent.add(entry);
+}
+
+if (inventoryManager.getProductionLog().isEmpty() && inventoryManager.getRefillLog().isEmpty()) {
+    JLabel empty = new JLabel("No activity recorded yet.");
+    empty.setForeground(new Color(160, 160, 160));
+    empty.setFont(new Font("Monospaced", Font.PLAIN, 12));
+    empty.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+    logContent.add(empty);
+}
+
+JScrollPane logScroll = new JScrollPane(logContent);
+logScroll.setBorder(null);
+logScroll.setOpaque(false);
+logScroll.getViewport().setOpaque(false);
+logPanel.add(logScroll, BorderLayout.CENTER);
         logPanel.setPreferredSize(new Dimension(350, 0));
 
         lowerContent.add(leftColumn, BorderLayout.CENTER);

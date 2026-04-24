@@ -33,10 +33,10 @@ public class InventoryManager {
     //  VALIDATE PRODUCTION
     
 
-    public String validateProduction(CoffeeType coffee, int qty) {
+    public String validateProduction(CoffeeType coffee, double sizeMultiplier, int qty) {
         for (Map.Entry<Ingredient, Double> entry : coffee.getRecipe().entrySet()) {
             Ingredient ing    = entry.getKey();
-            double     needed = entry.getValue() * qty;
+            double     needed = entry.getValue() * sizeMultiplier* qty;
             double     avail  = currentStock.getOrDefault(ing, 0.0);
             if (needed > 0 && avail < needed) {
                 return String.format(
@@ -51,10 +51,10 @@ public class InventoryManager {
     //  PRODUCE
  
 
-    public void produce(CoffeeType coffee, int qty) {
+    public void produce(CoffeeType coffee, double sizeMultiplier,int qty) {
         for (Map.Entry<Ingredient, Double> entry : coffee.getRecipe().entrySet()) {
             Ingredient ing    = entry.getKey();
-            double     needed = entry.getValue() * qty;
+            double     needed = entry.getValue()  * sizeMultiplier * qty;
             currentStock.put(ing,     currentStock.getOrDefault(ing, 0.0)     - needed);
             theoreticalStock.put(ing, theoreticalStock.getOrDefault(ing, 0.0) - needed);
         }
@@ -101,20 +101,34 @@ public class InventoryManager {
     //  MAX PRODUCIBLE
     
 
-    public int maxProducible(CoffeeType coffee) {
-        int max = Integer.MAX_VALUE;
-        for (Map.Entry<Ingredient, Double> entry : coffee.getRecipe().entrySet()) {
-            double perCup = entry.getValue();
-            if (perCup > 0) {
-                double avail = currentStock.getOrDefault(entry.getKey(), 0.0);
-                max = Math.min(max, (int)(avail / perCup));
+   public int maxProducible(CoffeeType type, double sizeMultiplier) {
+    int max = Integer.MAX_VALUE;
+    Map<Ingredient, Double> recipe = type.getRecipe();
+
+    for (Map.Entry<Ingredient, Double> entry : recipe.entrySet()) {
+        Ingredient recipeIng = entry.getKey();
+        double available = 0.0;
+        for (Ingredient ing : ingredients) {
+            if (ing.getId() == recipeIng.getId()) {
+                available = currentStock.getOrDefault(ing, 0.0);
+                break;
             }
         }
-        return (max == Integer.MAX_VALUE) ? 0 : max;
+
+        double required = entry.getValue() * sizeMultiplier; // ← multiply here
+
+        if (required > 0) {
+            int possible = (int) (available / required);
+            if (possible < max) max = possible;
+        }
     }
+    return (max == Integer.MAX_VALUE) ? 0 : max;
+}
+
+        
 
 
-    //  RELOAD - call after adding/removing ingredients or coffee types
+    
     
 
     public void reload() {
