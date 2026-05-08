@@ -1,12 +1,12 @@
-
+package model;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 public class RefillRecord {
 
-    private final Ingredient ingredient;
-    private final double     amount;
+    private final Ingredient    ingredient;
+    private final double        amount;
     private final LocalDateTime timestamp;
 
     private static final DateTimeFormatter FMT =
@@ -20,6 +20,8 @@ public class RefillRecord {
 
     public Ingredient getIngredient() { return ingredient; }
     public double     getAmount()     { return amount;     }
+    public LocalDateTime getTimestamp()      { return timestamp;      }
+
 
     @Override
     public String toString() {

@@ -1,4 +1,4 @@
-package panel;
+package panel.refill;
 
 import javax.swing.*;
 import javax.swing.border.*;
@@ -12,16 +12,15 @@ import java.util.*;
 
 public class RefillPanel extends JPanel {
 
-    // ─── Colours (match ProductionPanel) ─────────────────────────────────────
+    // ─── Colours ──────────────────────────────────────────────────────────────
     private static final Color BG         = new Color(245, 245, 240);
     private static final Color ACCENT     = new Color(120, 90, 70);
     private static final Color TEXT_DARK  = new Color(60, 60, 60);
     private static final Color TEXT_LIGHT = new Color(150, 150, 150);
     private static final Color GREEN      = new Color(50, 140, 50);
-    private static final Color RED_ERR    = new Color(180, 50, 50);
 
     // ─── State ────────────────────────────────────────────────────────────────
-    private final InventoryManager im;
+    private final RefillController controller;
 
     // Form widgets
     private JComboBox<Ingredient> ingredientCombo;
@@ -34,13 +33,23 @@ public class RefillPanel extends JPanel {
 
     // ─── Constructor ──────────────────────────────────────────────────────────
     public RefillPanel(InventoryManager im) {
-        this.im = im;
+        this.controller = new RefillController(im);
         setLayout(new BorderLayout());
         setBackground(BG);
         setBorder(new EmptyBorder(30, 30, 30, 30));
         add(buildHeader(), BorderLayout.NORTH);
         add(buildBody(),   BorderLayout.CENTER);
     }
+
+    public void refresh() {
+    // Reload combo box with fresh ingredients
+    ingredientCombo.removeAllItems();
+    for (Ingredient ing : controller.getIngredients()) {
+        ingredientCombo.addItem(ing);
+    }
+    refreshStockLabels();
+    rebuildLog();
+}
 
     // ═════════════════════════════════════════════════════════════════════════
     //  HEADER
@@ -84,13 +93,11 @@ public class RefillPanel extends JPanel {
         card.setLayout(new BorderLayout(0, 20));
         card.setBorder(new EmptyBorder(30, 30, 30, 30));
 
-        // Title
         JLabel cardTitle = new JLabel("+ NEW INTAKE");
         cardTitle.setFont(new Font("SansSerif", Font.BOLD, 16));
         cardTitle.setForeground(ACCENT);
         cardTitle.setBorder(new EmptyBorder(0, 0, 10, 0));
 
-        // Form fields
         JPanel form = new JPanel();
         form.setLayout(new BoxLayout(form, BoxLayout.Y_AXIS));
         form.setOpaque(false);
@@ -99,7 +106,7 @@ public class RefillPanel extends JPanel {
         form.add(formLabel("SELECT RESOURCE"));
         form.add(Box.createVerticalStrut(6));
         ingredientCombo = new JComboBox<>();
-        for (Ingredient ing : im.getIngredients()) ingredientCombo.addItem(ing);
+        for (Ingredient ing : controller.getIngredients()) ingredientCombo.addItem(ing);
         ingredientCombo.setMaximumSize(new Dimension(Integer.MAX_VALUE, 38));
         ingredientCombo.setFont(new Font("SansSerif", Font.PLAIN, 14));
         ingredientCombo.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -163,7 +170,6 @@ public class RefillPanel extends JPanel {
         btnRegister.setCursor(new Cursor(Cursor.HAND_CURSOR));
         btnRegister.setAlignmentX(Component.LEFT_ALIGNMENT);
         btnRegister.setMaximumSize(new Dimension(Integer.MAX_VALUE, 46));
-        
         btnRegister.addActionListener(e -> doRegisterIntake());
 
         form.add(Box.createVerticalStrut(20));
@@ -172,9 +178,7 @@ public class RefillPanel extends JPanel {
         card.add(cardTitle, BorderLayout.NORTH);
         card.add(form,      BorderLayout.CENTER);
 
-        // Trigger initial label refresh
         refreshStockLabels();
-
         return card;
     }
 
@@ -188,7 +192,6 @@ public class RefillPanel extends JPanel {
         cardTitle.setFont(new Font("SansSerif", Font.BOLD, 16));
         cardTitle.setForeground(ACCENT);
         cardTitle.setBorder(new EmptyBorder(0, 0, 10, 0));
-        card.add(cardTitle, BorderLayout.NORTH);
 
         // Column headers
         JPanel colHdr = new JPanel(new GridLayout(1, 3, 0, 0));
@@ -200,34 +203,23 @@ public class RefillPanel extends JPanel {
             hl.setForeground(TEXT_LIGHT);
             colHdr.add(hl);
         }
-        card.add(colHdr, BorderLayout.CENTER);
 
         // Log rows
         logContent = new JPanel();
         logContent.setLayout(new BoxLayout(logContent, BoxLayout.Y_AXIS));
         logContent.setOpaque(false);
-
         rebuildLog();
 
         JScrollPane scroll = new JScrollPane(logContent);
         scroll.setBorder(null);
         scroll.setOpaque(false);
         scroll.getViewport().setOpaque(false);
-        card.add(scroll, BorderLayout.SOUTH);
 
-        // Make scroll take all remaining space
-        card.setLayout(new BorderLayout(0, 10));
-        card.add(cardTitle, BorderLayout.NORTH);
-        card.add(colHdr,    BorderLayout.CENTER);
-        card.add(scroll,    BorderLayout.SOUTH);
-
-        // Give scroll more room
-        card.setLayout(new BorderLayout(0, 10));
         JPanel top = new JPanel(new BorderLayout());
         top.setOpaque(false);
         top.add(cardTitle, BorderLayout.NORTH);
         top.add(colHdr,    BorderLayout.SOUTH);
-        card.removeAll();
+
         card.add(top,    BorderLayout.NORTH);
         card.add(scroll, BorderLayout.CENTER);
 
@@ -236,21 +228,20 @@ public class RefillPanel extends JPanel {
 
     // ─── Actions ──────────────────────────────────────────────────────────────
     private void doRegisterIntake() {
-        model.Ingredient ing = (model.Ingredient) ingredientCombo.getSelectedItem();
+        Ingredient ing = (Ingredient) ingredientCombo.getSelectedItem();
         if (ing == null) {
             JOptionPane.showMessageDialog(this, "Please select an ingredient.", "Missing Selection", JOptionPane.WARNING_MESSAGE);
             return;
         }
 
         try { amountSpinner.commitEdit(); } catch (Exception ex) { /* ignore */ }
-double amount = (Double) amountSpinner.getValue();
+        double amount = (Double) amountSpinner.getValue();
         if (amount <= 0) {
             JOptionPane.showMessageDialog(this, "Amount must be greater than 0.", "Invalid Amount", JOptionPane.WARNING_MESSAGE);
             return;
         }
 
-        im.refill(ing, amount);
-
+        controller.registerIntake(ing, amount);
         refreshStockLabels();
         rebuildLog();
 
@@ -260,7 +251,7 @@ double amount = (Double) amountSpinner.getValue();
     }
 
     private void refreshStockLabels() {
-           try { amountSpinner.commitEdit(); } catch (Exception ex) { /* ignore */ }
+        try { amountSpinner.commitEdit(); } catch (Exception ex) { /* ignore */ }
         Ingredient ing = (Ingredient) ingredientCombo.getSelectedItem();
         if (ing == null) {
             lblCurrentStock.setText("—");
@@ -268,29 +259,25 @@ double amount = (Double) amountSpinner.getValue();
             return;
         }
 
-        double current = im.getStock(ing);
+        double current = controller.getCurrentStock(ing);
         double amount  = (Double) amountSpinner.getValue();
-        double after   = current + amount;
 
         lblCurrentStock.setText(String.format("%.2f %s", current, ing.getUnit()));
-        lblAfterRefill.setText(String.format("%.2f %s", after, ing.getUnit()));
+        lblAfterRefill.setText(String.format("%.2f %s", current + amount, ing.getUnit()));
     }
 
     private void rebuildLog() {
         logContent.removeAll();
 
-        LinkedList<RefillRecord> log = im.getRefillLog();
+        ArrayList<RefillRecord> reversed = controller.getRefillLogReversed();
 
-        if (log.isEmpty()) {
+        if (reversed.isEmpty()) {
             JLabel empty = new JLabel("No refills recorded yet.");
             empty.setFont(new Font("Monospaced", Font.PLAIN, 12));
             empty.setForeground(TEXT_LIGHT);
             empty.setBorder(new EmptyBorder(10, 2, 0, 0));
             logContent.add(empty);
         } else {
-            // Show most recent first
-            ArrayList<RefillRecord> reversed = new ArrayList<>(log);
-            Collections.reverse(reversed);
             for (RefillRecord rec : reversed) {
                 JPanel row = new JPanel(new GridLayout(1, 3, 0, 0));
                 row.setOpaque(false);
@@ -305,7 +292,7 @@ double amount = (Double) amountSpinner.getValue();
                 lAmt.setFont(new Font("Monospaced", Font.BOLD, 13));
                 lAmt.setForeground(GREEN);
 
-                JLabel lTime = new JLabel(rec.toString().substring(1, 20)); // extract timestamp
+                JLabel lTime = new JLabel(rec.toString().substring(1, 20));
                 lTime.setFont(new Font("Monospaced", Font.PLAIN, 11));
                 lTime.setForeground(TEXT_LIGHT);
 

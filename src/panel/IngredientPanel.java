@@ -1,5 +1,4 @@
+package panel;
 
-
-public class IngredientPanel {
-    
+public class IngredientPanel extends javax.swing.JPanel {
 }

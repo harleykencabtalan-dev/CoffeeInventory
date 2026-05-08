@@ -1,3 +1,5 @@
+package model;
+
 public class Ingredient {
 
     private final int    id;
@@ -21,10 +23,10 @@ public class Ingredient {
 
     public int    getId()                 { return id; }
     public String getDisplayName()        { return name; }
-    public String getUnit()               { return unit;}
+    public String getUnit()               { return unit; }
     public double getLowStockThreshold()  { return lowStockThreshold; }
-    public double getCurrentStock()       { return currentStock;}
-    public double getTheoreticalStock()   { return theoreticalStock;}
+    public double getCurrentStock()       { return currentStock; }
+    public double getTheoreticalStock()   { return theoreticalStock; }
 
     @Override
     public String toString() { return name; }

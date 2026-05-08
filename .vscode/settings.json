@@ -1,1 +1,5 @@
-
+{
+    "java.project.sourcePaths": ["src"],
+    "java.compile.nullAnalysis.mode": "disabled",
+    "java.configuration.updateBuildConfiguration": "automatic"
+}

@@ -1,64 +1,37 @@
-package panel;
-
-import javax.swing.*;
-import javax.swing.border.*;
+package panel.production;
 
 import model.CoffeeType;
 import model.Ingredient;
 
+import javax.swing.*;
+import javax.swing.border.*;
 import java.awt.*;
-import java.awt.event.*;
 import java.util.*;
 import java.util.List;
 
 public class ProductionPanel extends JPanel {
 
-    // ─── Colours ─────────────────────────────────────────────────────────────────
-    private static final Color BG        = new Color(245, 245, 240);
-    private static final Color ACCENT    = new Color(120, 90, 70);
-    private static final Color TEXT_DARK = new Color(60, 60, 60);
-    private static final Color TEXT_LIGHT= new Color(150, 150, 150);
-    private static final Color GREEN     = new Color(50, 140, 50);
-    private static final Color RED_ERR   = new Color(180, 50, 50);
+    // ─── Colours ──────────────────────────────────────────────────────────────
+    private static final Color BG         = new Color(245, 245, 240);
+    private static final Color ACCENT     = new Color(120, 90, 70);
+    private static final Color TEXT_DARK  = new Color(60, 60, 60);
+    private static final Color TEXT_LIGHT = new Color(150, 150, 150);
+    private static final Color GREEN      = new Color(50, 140, 50);
+    private static final Color RED_ERR    = new Color(180, 50, 50);
 
-    // ─── Inner class: one independent order slot ─────────────────────────────────
-    /**
-     * Each OrderItem represents ONE coffee cup order with its own
-     * size, temperature, and (optionally) a customised recipe.
-     */
-    private static class OrderItem {
-        model.CoffeeType coffeeType;
-        String     size        = "Medium";
-        String     temp        = "Hot";
-        boolean    isCustomized= false;
-        Map<model.Ingredient, Double> recipe = new LinkedHashMap<>();
+    // ─── State ────────────────────────────────────────────────────────────────
+    private final ProductionController controller;
 
-        OrderItem(model.CoffeeType ct) {
-            this.coffeeType = ct;
-            recipe.putAll(ct.getRecipe());
-        }
+    // Step-1 selections
+    private CoffeeType selectedCoffee;
+    private String     selectedSize   = "Medium";
+    private String     selectedTemp   = "Hot";
+    private int        quantity       = 1;
+    private boolean    isCustomized   = false;
 
-        /** Label shown in the coffee-selector list inside Step 2. */
-        String label(int index) {
-            return "Coffee " + (index + 1) + " — " + coffeeType.getDisplayName()
-                    + "  [" + size + ", " + temp + (isCustomized ? ", Custom" : "") + "]";
-        }
-    }
-
-    // ─── State ───────────────────────────────────────────────────────────────────
-    private final model.InventoryManager im;
-
-    // Step-1 selections (still single coffee + qty → generates the list)
-    private model.CoffeeType  selectedCoffee;
-    private String      selectedSize   = "Medium";
-    private String      selectedTemp   = "Hot";
-    private int         quantity       = 1;
-    private boolean     isCustomized   = false;   // default for new orders
-
-    // *** NEW: one OrderItem per cup ***
+    // Per-cup order list
     private List<OrderItem> orders = new ArrayList<>();
-    // *** NEW: which order is being customised in Step 2 ***
-    private int editingOrderIndex = 0;
+    private int editingOrderIndex  = 0;
 
     // Step indicator
     private final JPanel[] stepCards  = new JPanel[3];
@@ -69,27 +42,27 @@ public class ProductionPanel extends JPanel {
     private JPanel     stepContentPanel;
 
     // Step-1 widgets
-    private JComboBox<model.CoffeeType> coffeeCombo;
+    private JComboBox<CoffeeType> coffeeCombo;
     private JSpinner  qtySpinner;
     private JLabel    lblMaxProducible;
 
-    // Step-2 widgets (rebuilt each time)
+    // Step-2 & 3 roots (rebuilt dynamically)
     private JPanel step2Root;
-
-    // Step-3 widgets (rebuilt each time)
     private JPanel step3Root;
 
-    // ─── Constructor ─────────────────────────────────────────────────────────────
+    // ─── Constructor ──────────────────────────────────────────────────────────
     public ProductionPanel(model.InventoryManager im) {
-        this.im = im;
+        this.controller = new ProductionController(im);
         setLayout(new BorderLayout());
         setBackground(BG);
         setBorder(new EmptyBorder(30, 30, 30, 30));
-        add(buildHeader(),  BorderLayout.NORTH);
-        add(buildBody(),    BorderLayout.CENTER);
+        add(buildHeader(), BorderLayout.NORTH);
+        add(buildBody(),   BorderLayout.CENTER);
     }
 
-    // ═══ HEADER ══════════════════════════════════════════════════════════════════
+    // ═════════════════════════════════════════════════════════════════════════
+    //  HEADER
+    // ═════════════════════════════════════════════════════════════════════════
     private JPanel buildHeader() {
         JPanel header = new JPanel(new BorderLayout());
         header.setOpaque(false);
@@ -111,12 +84,13 @@ public class ProductionPanel extends JPanel {
         return header;
     }
 
-    // ═══ BODY ═════════════════════════════════════════════════════════════════════
+    // ═════════════════════════════════════════════════════════════════════════
+    //  BODY
+    // ═════════════════════════════════════════════════════════════════════════
     private JPanel buildBody() {
         JPanel body = new JPanel();
         body.setLayout(new BoxLayout(body, BoxLayout.Y_AXIS));
         body.setOpaque(false);
-        body.setAlignmentY(Component.TOP_ALIGNMENT);
 
         JPanel indicator = buildStepIndicator();
         indicator.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -126,12 +100,13 @@ public class ProductionPanel extends JPanel {
         JPanel mainCard = buildMainCard();
         mainCard.setAlignmentX(Component.CENTER_ALIGNMENT);
         body.add(mainCard);
-
         body.add(Box.createVerticalGlue());
         return body;
     }
 
-    // ═══ STEP INDICATOR ══════════════════════════════════════════════════════════
+    // ═════════════════════════════════════════════════════════════════════════
+    //  STEP INDICATOR
+    // ═════════════════════════════════════════════════════════════════════════
     private JPanel buildStepIndicator() {
         JPanel row = new JPanel(new GridLayout(1, 3, 20, 0));
         row.setOpaque(false);
@@ -185,7 +160,9 @@ public class ProductionPanel extends JPanel {
         stepCardLayout.show(stepContentPanel, "STEP" + step);
     }
 
-    // ═══ MAIN CARD ════════════════════════════════════════════════════════════════
+    // ═════════════════════════════════════════════════════════════════════════
+    //  MAIN CARD
+    // ═════════════════════════════════════════════════════════════════════════
     private JPanel buildMainCard() {
         JPanel card = new JPanel(new BorderLayout()) {
             @Override protected void paintComponent(Graphics g) {
@@ -216,11 +193,12 @@ public class ProductionPanel extends JPanel {
         return card;
     }
 
-    // ═══ STEP 1 — SELECT COFFEE ══════════════════════════════════════════════════
+    // ═════════════════════════════════════════════════════════════════════════
+    //  STEP 1 — SELECT COFFEE
+    // ═════════════════════════════════════════════════════════════════════════
     private JPanel buildStep1() {
         JPanel root = new JPanel(new BorderLayout(0, 20));
         root.setOpaque(false);
-
         root.add(stepHeading("Step 1 — Select Your Coffee"), BorderLayout.NORTH);
 
         JPanel form = new JPanel(new GridLayout(1, 2, 40, 0));
@@ -234,7 +212,7 @@ public class ProductionPanel extends JPanel {
         left.add(formLabel("Coffee Flavor:"));
         left.add(Box.createVerticalStrut(6));
         coffeeCombo = new JComboBox<>();
-        for (model.CoffeeType ct : im.getCoffeeTypes()) coffeeCombo.addItem(ct);
+        for (CoffeeType ct : controller.getCoffeeTypes()) coffeeCombo.addItem(ct);
         coffeeCombo.setMaximumSize(new Dimension(Integer.MAX_VALUE, 38));
         coffeeCombo.setFont(new Font("SansSerif", Font.PLAIN, 14));
         coffeeCombo.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -329,27 +307,10 @@ public class ProductionPanel extends JPanel {
         return root;
     }
 
-    private double getSizeMultiplier() {
-        return switch (selectedSize) {
-            case "Small" -> 0.75;
-            case "Large" -> 1.25;
-            default      -> 1.0;
-        };
-    }
-
-    /** Size multiplier for a specific order item. */
-    private double getSizeMultiplierFor(OrderItem o) {
-        return switch (o.size) {
-            case "Small" -> 0.75;
-            case "Large" -> 1.25;
-            default      -> 1.0;
-        };
-    }
-
     private void refreshMaxLabel() {
-        model.CoffeeType ct = (model.CoffeeType) coffeeCombo.getSelectedItem();
+        CoffeeType ct = (CoffeeType) coffeeCombo.getSelectedItem();
         if (ct == null) { lblMaxProducible.setText("Select a flavor"); return; }
-        int max = im.maxProducible(ct, getSizeMultiplier());
+        int max = controller.maxProducible(ct, controller.getSizeMultiplier(selectedSize));
         if (max <= 0) {
             lblMaxProducible.setForeground(RED_ERR);
             lblMaxProducible.setText("OUT OF STOCK");
@@ -360,7 +321,7 @@ public class ProductionPanel extends JPanel {
     }
 
     private void onStep1Next() {
-        selectedCoffee = (model.CoffeeType) coffeeCombo.getSelectedItem();
+        selectedCoffee = (CoffeeType) coffeeCombo.getSelectedItem();
         quantity       = (int) qtySpinner.getValue();
 
         if (selectedCoffee == null) {
@@ -369,7 +330,6 @@ public class ProductionPanel extends JPanel {
             return;
         }
 
-        // ── Build one independent OrderItem per cup ──────────────────────────────
         orders.clear();
         for (int i = 0; i < quantity; i++) {
             OrderItem item = new OrderItem(selectedCoffee);
@@ -384,7 +344,9 @@ public class ProductionPanel extends JPanel {
         goToStep(1);
     }
 
-    // ═══ STEP 2 — INGREDIENTS / CUSTOMIZE (per-order) ════════════════════════════
+    // ═════════════════════════════════════════════════════════════════════════
+    //  STEP 2 — INGREDIENTS / CUSTOMIZE
+    // ═════════════════════════════════════════════════════════════════════════
     private JPanel buildStep2() {
         step2Root = new JPanel(new BorderLayout(0, 16));
         step2Root.setOpaque(false);
@@ -396,16 +358,15 @@ public class ProductionPanel extends JPanel {
 
         OrderItem current = orders.get(editingOrderIndex);
 
-        // ── Title ─────────────────────────────────────────────────────────────────
         step2Root.add(
             stepHeading("Step 2 — " + (current.isCustomized ? "Customize Recipe" : "Review Ingredients")),
             BorderLayout.NORTH);
 
-        // ── Coffee selector row (only shown when qty > 1) ─────────────────────────
         JPanel centerWrap = new JPanel();
         centerWrap.setLayout(new BoxLayout(centerWrap, BoxLayout.Y_AXIS));
         centerWrap.setOpaque(false);
 
+        // Order selector (when qty > 1)
         if (orders.size() > 1) {
             JPanel selectorRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
             selectorRow.setOpaque(false);
@@ -415,7 +376,6 @@ public class ProductionPanel extends JPanel {
             selLbl.setFont(new Font("SansSerif", Font.BOLD, 12));
             selLbl.setForeground(TEXT_DARK);
 
-            // Dropdown listing "Coffee 1 — Espresso [Medium, Hot]", etc.
             String[] labels = new String[orders.size()];
             for (int i = 0; i < orders.size(); i++) labels[i] = orders.get(i).label(i);
             JComboBox<String> orderSelector = new JComboBox<>(labels);
@@ -433,7 +393,7 @@ public class ProductionPanel extends JPanel {
             centerWrap.add(Box.createVerticalStrut(12));
         }
 
-        // ── Ingredient table ──────────────────────────────────────────────────────
+        // Ingredient table
         JPanel tableWrap = new JPanel(new BorderLayout());
         tableWrap.setOpaque(false);
 
@@ -454,13 +414,13 @@ public class ProductionPanel extends JPanel {
         rows.setLayout(new BoxLayout(rows, BoxLayout.Y_AXIS));
         rows.setOpaque(false);
 
-        double mult = getSizeMultiplierFor(current);
+        double mult = controller.getSizeMultiplier(current.size);
 
-        for (Map.Entry<model.Ingredient, Double> entry : new ArrayList<>(current.recipe.entrySet())) {
+        for (Map.Entry<Ingredient, Double> entry : new ArrayList<>(current.recipe.entrySet())) {
             Ingredient ing    = entry.getKey();
             double     amt    = entry.getValue();
             double     needed = amt * mult;
-            double     stock  = im.getStock(ing);
+            double     stock  = controller.getStock(ing);
             boolean    ok     = stock >= needed;
 
             JPanel row = new JPanel(new GridLayout(1, current.isCustomized ? 4 : 3, 0, 0));
@@ -491,11 +451,10 @@ public class ProductionPanel extends JPanel {
                 JButton btnDel   = microBtn("✕");
                 btnDel.setForeground(RED_ERR);
 
-                // Capture index so lambdas always refer to THIS order
                 final int idx = editingOrderIndex;
 
                 btnMinus.addActionListener(e -> {
-                    Map<model.Ingredient, Double> r = orders.get(idx).recipe;
+                    Map<Ingredient, Double> r = orders.get(idx).recipe;
                     double cur  = r.getOrDefault(ing, 0.0);
                     double next = Math.max(0, cur - 1);
                     if (next == 0) r.remove(ing); else r.put(ing, next);
@@ -526,7 +485,7 @@ public class ProductionPanel extends JPanel {
             addRow.setMaximumSize(new Dimension(Integer.MAX_VALUE, 38));
 
             JComboBox<Ingredient> addCombo = new JComboBox<>();
-            for (Ingredient ing : im.getIngredients())
+            for (Ingredient ing : controller.getIngredients())
                 if (!current.recipe.containsKey(ing)) addCombo.addItem(ing);
             addCombo.setFont(new Font("SansSerif", Font.PLAIN, 12));
             addCombo.setPreferredSize(new Dimension(160, 30));
@@ -568,7 +527,7 @@ public class ProductionPanel extends JPanel {
         centerWrap.add(tableWrap);
         step2Root.add(centerWrap, BorderLayout.CENTER);
 
-        // ── Nav buttons ───────────────────────────────────────────────────────────
+        // Nav buttons
         JPanel btnRow = new JPanel(new BorderLayout());
         btnRow.setOpaque(false);
 
@@ -587,39 +546,20 @@ public class ProductionPanel extends JPanel {
     }
 
     private void onStep2Next() {
-        // Validate ALL orders together
-        StringBuilder err = new StringBuilder();
-
-        // Aggregate total ingredient needs across all orders
-        Map<Ingredient, Double> totalNeeded = new LinkedHashMap<>();
-        for (OrderItem o : orders) {
-            double m = getSizeMultiplierFor(o);
-            for (Map.Entry<Ingredient, Double> e : o.recipe.entrySet()) {
-                totalNeeded.merge(e.getKey(), e.getValue() * m, Double::sum);
-            }
-        }
-
-        for (Map.Entry<Ingredient, Double> e : totalNeeded.entrySet()) {
-            double avail = im.getStock(e.getKey());
-            if (avail < e.getValue()) {
-                err.append(String.format("• %s: need %.2f %s, have %.2f\n",
-                        e.getKey().getDisplayName(),
-                        e.getValue(), e.getKey().getUnit(), avail));
-            }
-        }
-
-        if (err.length() > 0) {
+        String err = controller.validateStock(orders);
+        if (!err.isEmpty()) {
             JOptionPane.showMessageDialog(this,
                     "Cannot produce — insufficient stock:\n\n" + err,
                     "Stock Shortage", JOptionPane.ERROR_MESSAGE);
             return;
         }
-
         rebuildStep3();
         goToStep(2);
     }
 
-    // ═══ STEP 3 — CONFIRM PRODUCTION ═════════════════════════════════════════════
+    // ═════════════════════════════════════════════════════════════════════════
+    //  STEP 3 — CONFIRM PRODUCTION
+    // ═════════════════════════════════════════════════════════════════════════
     private JPanel buildStep3() {
         step3Root = new JPanel(new BorderLayout(0, 16));
         step3Root.setOpaque(false);
@@ -628,13 +568,11 @@ public class ProductionPanel extends JPanel {
 
     private void rebuildStep3() {
         step3Root.removeAll();
-
         step3Root.add(stepHeading("Step 3 — Confirm Production"), BorderLayout.NORTH);
 
         JPanel summary = new JPanel(new BorderLayout(0, 10));
         summary.setOpaque(false);
 
-        // Top stat cards
         long customCount = orders.stream().filter(o -> o.isCustomized).count();
         JPanel orderHdr = new JPanel(new GridLayout(1, 3, 20, 0));
         orderHdr.setOpaque(false);
@@ -653,9 +591,8 @@ public class ProductionPanel extends JPanel {
 
         for (int i = 0; i < orders.size(); i++) {
             OrderItem o = orders.get(i);
-            double    m = getSizeMultiplierFor(o);
+            double    m = controller.getSizeMultiplier(o.size);
 
-            // Order header label
             JLabel orderLbl = new JLabel(
                 "Coffee " + (i+1) + "  —  " + o.coffeeType.getDisplayName()
                 + "  [" + o.size + ", " + o.temp + (o.isCustomized ? ", Custom" : "") + "]");
@@ -669,17 +606,17 @@ public class ProductionPanel extends JPanel {
                 Ingredient ing    = e.getKey();
                 double     perCup = e.getValue();
                 double     total  = perCup * m;
-                double     stock  = im.getStock(ing);
+                double     stock  = controller.getStock(ing);
 
                 JPanel row = new JPanel(new GridLayout(1, 4, 0, 0));
                 row.setOpaque(false);
                 row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 28));
                 row.setBorder(new MatteBorder(0, 0, 1, 0, new Color(235,228,218)));
 
-                addSummaryCell(row, "  " + ing.getDisplayName(),                   Font.PLAIN, TEXT_DARK);
-                addSummaryCell(row, String.format("%.2f/cup", perCup),             Font.PLAIN, TEXT_LIGHT);
+                addSummaryCell(row, "  " + ing.getDisplayName(),                         Font.PLAIN, TEXT_DARK);
+                addSummaryCell(row, String.format("%.2f/cup", perCup),                   Font.PLAIN, TEXT_LIGHT);
                 addSummaryCell(row, String.format("Total: %.2f %s", total, ing.getUnit()), Font.BOLD, ACCENT);
-                addSummaryCell(row, String.format("Stock: %.2f", stock),           Font.PLAIN, stock >= total ? GREEN : RED_ERR);
+                addSummaryCell(row, String.format("Stock: %.2f", stock),                 Font.PLAIN, stock >= total ? GREEN : RED_ERR);
                 breakdown.add(row);
                 breakdown.add(Box.createVerticalStrut(2));
             }
@@ -726,15 +663,7 @@ public class ProductionPanel extends JPanel {
     }
 
     private void doConfirmProduction() {
-        // Produce each order item individually
-        for (OrderItem o : orders) {
-            CoffeeType synth = new CoffeeType(
-                o.coffeeType.getId(),
-                o.coffeeType.getDisplayName() + (o.isCustomized ? " (Custom)" : ""),
-                Collections.unmodifiableMap(new LinkedHashMap<>(o.recipe))
-            );
-            im.produce(synth, getSizeMultiplierFor(o), 1);
-        }
+        controller.produce(orders);
 
         JOptionPane.showMessageDialog(this,
             "Successfully produced " + orders.size() + "× " + selectedCoffee.getDisplayName(),
@@ -745,7 +674,9 @@ public class ProductionPanel extends JPanel {
         goToStep(0);
     }
 
-    // ═══ UI HELPERS ══════════════════════════════════════════════════════════════
+    // ═════════════════════════════════════════════════════════════════════════
+    //  UI HELPERS
+    // ═════════════════════════════════════════════════════════════════════════
     private JLabel stepHeading(String text) {
         JLabel l = new JLabel(text);
         l.setFont(new Font("SansSerif", Font.BOLD, 18));

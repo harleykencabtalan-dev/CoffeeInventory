@@ -1,3 +1,5 @@
+package model;
+
 import java.io.*;
 import java.net.*;
 import java.util.*;
@@ -6,9 +8,9 @@ public class DatabaseManager {
 
     private static final String BASE_URL = "http://localhost/cafe/";
 
-    
-// LOAD INGREDIENTS
-   
+
+    //  LOAD INGREDIENTS
+
 
     public static List<Ingredient> loadIngredients() {
         List<Ingredient> list = new ArrayList<>();
@@ -33,9 +35,9 @@ public class DatabaseManager {
         return list;
     }
 
- 
+
     //  LOAD COFFEE TYPES + RECIPES
-  
+
 
     public static List<CoffeeType> loadCoffeeTypes(List<Ingredient> ingredients) {
         List<CoffeeType> list = new ArrayList<>();
@@ -47,8 +49,6 @@ public class DatabaseManager {
                 if (entry.isEmpty()) continue;
                 int    id   = (int) Double.parseDouble(extractValue(entry, "id"));
                 String name = extractValue(entry, "name");
-
-              
                 Map<Ingredient, Double> recipe = loadRecipe(id, ingredients);
                 list.add(new CoffeeType(id, name, recipe));
             }
@@ -64,7 +64,6 @@ public class DatabaseManager {
         Map<Ingredient, Double> recipe = new HashMap<>();
         try {
             String response = get("get_recipe.php?coffee_type_id=" + coffeeTypeId);
-            
             String[] entries = response.replace("[","").replace("]","").split("\\},\\{");
             for (String entry : entries) {
                 entry = entry.replace("{","").replace("}","").trim();
@@ -84,17 +83,17 @@ public class DatabaseManager {
         return recipe;
     }
 
-    
+
     //  ADD / REMOVE INGREDIENT
-  
+
 
     public static void addIngredient(String name, String unit,
                                      double threshold, double initialStock) {
         try {
-            String params = "name="      + encode(name)
-                          + "&unit="     + encode(unit)
+            String params = "name="       + encode(name)
+                          + "&unit="      + encode(unit)
                           + "&threshold=" + threshold
-                          + "&stock="    + initialStock;
+                          + "&stock="     + initialStock;
             post("add_ingredient.php", params);
             System.out.println("[DB] Ingredient added: " + name);
         } catch (Exception e) {
@@ -111,17 +110,14 @@ public class DatabaseManager {
         }
     }
 
-  
+
     //  ADD / REMOVE COFFEE TYPE
 
 
     public static void addCoffeeType(String name, Map<Integer, Double> recipe) {
         try {
-           
             String response = post("add_coffee_type.php", "name=" + encode(name));
             int newId = (int) Double.parseDouble(response.trim());
-
-            // 2. Insert each recipe row
             for (Map.Entry<Integer, Double> entry : recipe.entrySet()) {
                 String params = "coffee_type_id=" + newId
                               + "&ingredient_id=" + entry.getKey()
@@ -136,7 +132,6 @@ public class DatabaseManager {
 
     public static void removeCoffeeType(int id) {
         try {
-            // ON DELETE CASCADE handles recipe rows automatically
             post("remove_coffee_type.php", "id=" + id);
             System.out.println("[DB] Coffee type removed: id=" + id);
         } catch (Exception e) {
@@ -145,14 +140,14 @@ public class DatabaseManager {
     }
 
 
-    //  SAVE STOCK  
-    
+    //  SAVE STOCK
+
 
     public static void saveStock(Ingredient ingredient,
                                  double current, double theoretical) {
         try {
-            String params = "id="                + ingredient.getId()
-                          + "&current_stock="    + current
+            String params = "id="                 + ingredient.getId()
+                          + "&current_stock="     + current
                           + "&theoretical_stock=" + theoretical;
             post("update_stock.php", params);
         } catch (Exception e) {
@@ -162,7 +157,7 @@ public class DatabaseManager {
 
 
     //  LOG PRODUCTION
- 
+
 
     public static void logProduction(String coffeeName, int quantity) {
         try {
@@ -174,8 +169,9 @@ public class DatabaseManager {
         }
     }
 
+
     //  LOG REFILL
- 
+
 
     public static void logRefill(Ingredient ingredient, double amount) {
         try {
@@ -189,6 +185,7 @@ public class DatabaseManager {
 
 
     //  LOAD LOGS
+
 
     public static Map<String, List<String>> loadLogs() {
         Map<String, List<String>> result = new HashMap<>();
@@ -228,9 +225,9 @@ public class DatabaseManager {
         return result;
     }
 
-   
+
     //  INTERNAL HELPERS
-  
+
 
     private static String get(String endpoint) throws Exception {
         URI uri = new URI(BASE_URL + endpoint);

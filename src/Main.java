@@ -1,5 +1,7 @@
 import javax.swing.*;
 import java.awt.*;
+import model.InventoryManager; 
+
 
 public class Main extends JFrame {
 

@@ -1,10 +1,17 @@
-import java.util.*;
+package model;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Stack;
 
 public class InventoryManager {
 
     private List<Ingredient>              ingredients;
     private List<CoffeeType>              coffeeTypes;
-
+    private final List<String>            varianceLogs     = new ArrayList<>();
     private final Map<Ingredient, Double> currentStock     = new HashMap<>();
     private final Map<Ingredient, Double> theoreticalStock = new HashMap<>();
 
@@ -13,9 +20,9 @@ public class InventoryManager {
     private final List<String>             alertMessages = new ArrayList<>();
     private final List<Ingredient>         lowStockList  = new ArrayList<>();
 
-   
+
     //  CONSTRUCTOR
-   
+
 
     public InventoryManager() {
         ingredients = DatabaseManager.loadIngredients();
@@ -29,14 +36,14 @@ public class InventoryManager {
         refreshAlerts();
     }
 
-    
+
     //  VALIDATE PRODUCTION
-    
+
 
     public String validateProduction(CoffeeType coffee, double sizeMultiplier, int qty) {
         for (Map.Entry<Ingredient, Double> entry : coffee.getRecipe().entrySet()) {
             Ingredient ing    = entry.getKey();
-            double     needed = entry.getValue() * sizeMultiplier* qty;
+            double     needed = entry.getValue() * sizeMultiplier * qty;
             double     avail  = currentStock.getOrDefault(ing, 0.0);
             if (needed > 0 && avail < needed) {
                 return String.format(
@@ -49,12 +56,12 @@ public class InventoryManager {
 
 
     //  PRODUCE
- 
 
-    public void produce(CoffeeType coffee, double sizeMultiplier,int qty) {
+
+    public void produce(CoffeeType coffee, double sizeMultiplier, int qty) {
         for (Map.Entry<Ingredient, Double> entry : coffee.getRecipe().entrySet()) {
             Ingredient ing    = entry.getKey();
-            double     needed = entry.getValue()  * sizeMultiplier * qty;
+            double     needed = entry.getValue() * sizeMultiplier * qty;
             currentStock.put(ing,     currentStock.getOrDefault(ing, 0.0)     - needed);
             theoreticalStock.put(ing, theoreticalStock.getOrDefault(ing, 0.0) - needed);
         }
@@ -70,7 +77,7 @@ public class InventoryManager {
 
 
     //  REFILL
- 
+
 
     public void refill(Ingredient ingredient, double amount) {
         currentStock.put(ingredient,     currentStock.getOrDefault(ingredient, 0.0)     + amount);
@@ -81,6 +88,43 @@ public class InventoryManager {
 
         DatabaseManager.logRefill(ingredient, amount);
         DatabaseManager.saveStock(ingredient, currentStock.get(ingredient), theoreticalStock.get(ingredient));
+    }
+
+
+    //  ADJUST STOCK (add or deduct with a reason)
+
+
+    public void adjustStock(Ingredient ingredient, double amount, String reason) {
+        double newCurrent = currentStock.getOrDefault(ingredient, 0.0) + amount;
+        double newTheo    = theoreticalStock.getOrDefault(ingredient, 0.0) + amount;
+
+        currentStock.put(ingredient,     newCurrent);
+        theoreticalStock.put(ingredient, newTheo);
+
+        String sign = amount >= 0 ? "+" : "";
+        varianceLogs.add(String.format("[ADJUST] %s  %s%.2f %s  | Reason: %s",
+                ingredient.getDisplayName(), sign, amount, ingredient.getUnit(), reason));
+
+        refreshAlerts();
+        DatabaseManager.saveStock(ingredient, newCurrent, newTheo);
+    }
+
+
+    //  SET EXACT STOCK VALUE
+
+
+    public void setStock(Ingredient ingredient, double exactValue, String reason) {
+        double oldValue = currentStock.getOrDefault(ingredient, 0.0);
+        double diff     = exactValue - oldValue;
+
+        currentStock.put(ingredient,     exactValue);
+        theoreticalStock.put(ingredient, exactValue);
+
+        varianceLogs.add(String.format("[SET] %s  %.2f → %.2f %s  | Reason: %s",
+                ingredient.getDisplayName(), oldValue, exactValue, ingredient.getUnit(), reason));
+
+        refreshAlerts();
+        DatabaseManager.saveStock(ingredient, exactValue, exactValue);
     }
 
 
@@ -97,39 +141,37 @@ public class InventoryManager {
         return variance;
     }
 
-  
+
     //  MAX PRODUCIBLE
-    
 
-   public int maxProducible(CoffeeType type, double sizeMultiplier) {
-    int max = Integer.MAX_VALUE;
-    Map<Ingredient, Double> recipe = type.getRecipe();
 
-    for (Map.Entry<Ingredient, Double> entry : recipe.entrySet()) {
-        Ingredient recipeIng = entry.getKey();
-        double available = 0.0;
-        for (Ingredient ing : ingredients) {
-            if (ing.getId() == recipeIng.getId()) {
-                available = currentStock.getOrDefault(ing, 0.0);
-                break;
+    public int maxProducible(CoffeeType type, double sizeMultiplier) {
+        int max = Integer.MAX_VALUE;
+        Map<Ingredient, Double> recipe = type.getRecipe();
+
+        for (Map.Entry<Ingredient, Double> entry : recipe.entrySet()) {
+            Ingredient recipeIng = entry.getKey();
+            double available = 0.0;
+            for (Ingredient ing : ingredients) {
+                if (ing.getId() == recipeIng.getId()) {
+                    available = currentStock.getOrDefault(ing, 0.0);
+                    break;
+                }
+            }
+
+            double required = entry.getValue() * sizeMultiplier;
+
+            if (required > 0) {
+                int possible = (int) (available / required);
+                if (possible < max) max = possible;
             }
         }
-
-        double required = entry.getValue() * sizeMultiplier; // ← multiply here
-
-        if (required > 0) {
-            int possible = (int) (available / required);
-            if (possible < max) max = possible;
-        }
+        return (max == Integer.MAX_VALUE) ? 0 : max;
     }
-    return (max == Integer.MAX_VALUE) ? 0 : max;
-}
-
-        
 
 
-    
-    
+    //  RELOAD
+
 
     public void reload() {
         ingredients = DatabaseManager.loadIngredients();
@@ -143,7 +185,7 @@ public class InventoryManager {
         refreshAlerts();
     }
 
-    
+
     //  ALERTS
 
 
@@ -163,18 +205,23 @@ public class InventoryManager {
         }
     }
 
-   
+
     //  GETTERS
-  
+
 
     public double                   getStock(Ingredient ing)            { return currentStock.getOrDefault(ing, 0.0);     }
     public double                   getTheoreticalStock(Ingredient ing) { return theoreticalStock.getOrDefault(ing, 0.0); }
-    public List<Ingredient>         getIngredients()                    { return ingredients;}
-    public List<CoffeeType>         getCoffeeTypes()                    { return coffeeTypes;}
-    public Stack<ProductionRecord>  getProductionLog()                  { return productionLog;}
-    public LinkedList<RefillRecord> getRefillLog()                      { return refillLog;}
-    public List<String>             getAlerts()                         { return alertMessages;}
-    public boolean                  hasAlerts()                         { return !alertMessages.isEmpty();}
-    public List<Ingredient>         getLowStockList()                   { return lowStockList;}
-    public int                      getLowStockCount()                  { return lowStockList.size();}
+    public List<Ingredient>         getIngredients()                    { return ingredients;    }
+    public List<CoffeeType>         getCoffeeTypes()                    { return coffeeTypes;    }
+    public Stack<ProductionRecord>  getProductionLog()                  { return productionLog;  }
+    public LinkedList<RefillRecord> getRefillLog()                      { return refillLog;      }
+    public List<String>             getAlerts()                         { return alertMessages;  }
+    public boolean                  hasAlerts()                         { return !alertMessages.isEmpty(); }
+    public List<Ingredient>         getLowStockList()                   { return lowStockList;   }
+    public int                      getLowStockCount()                  { return lowStockList.size(); }
+    public List<String>             getVarianceLogs()                   { return varianceLogs;   }
+
+    public void addVarianceLog(String entry) {
+        varianceLogs.add(entry);
+    }
 }

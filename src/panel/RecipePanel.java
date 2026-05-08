@@ -1,4 +1,4 @@
+package panel;
 
-public class RecipePanel {
-    
+public class RecipePanel extends javax.swing.JPanel {
 }
