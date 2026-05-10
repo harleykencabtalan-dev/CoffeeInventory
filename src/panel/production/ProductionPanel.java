@@ -11,13 +11,17 @@ import java.util.List;
 
 public class ProductionPanel extends JPanel {
 
-    // ─── Colours ──────────────────────────────────────────────────────────────
-    private static final Color BG         = new Color(245, 245, 240);
-    private static final Color ACCENT     = new Color(120, 90, 70);
-    private static final Color TEXT_DARK  = new Color(60, 60, 60);
-    private static final Color TEXT_LIGHT = new Color(150, 150, 150);
-    private static final Color GREEN      = new Color(50, 140, 50);
-    private static final Color RED_ERR    = new Color(180, 50, 50);
+    private static final Color BG          = new Color(250, 245, 230);
+private static final Color CARD_BG     = new Color(255, 252, 240);
+private static final Color CARD_BORDER = new Color(200, 175, 120);
+private static final Color ACCENT      = new Color(140, 100, 30);
+private static final Color HEADER_BG   = new Color(160, 120, 50);
+private static final Color GRID_LINE   = new Color(210, 190, 145);
+private static final Color TEXT_DARK   = new Color(60, 45, 20);
+private static final Color TEXT_LIGHT  = new Color(170, 150, 100);
+private static final Color GREEN       = new Color(60, 160, 60);
+private static final Color GREEN_DARK  = new Color(40, 120, 40);
+private static final Color RED_ERR     = new Color(180, 50, 50);
 
     // ─── State ────────────────────────────────────────────────────────────────
     private final ProductionController controller;
@@ -54,8 +58,8 @@ public class ProductionPanel extends JPanel {
     public ProductionPanel(model.InventoryManager im) {
         this.controller = new ProductionController(im);
         setLayout(new BorderLayout());
-        setBackground(BG);
-        setBorder(new EmptyBorder(30, 30, 30, 30));
+        setBackground(new Color(250, 245, 230));
+setBorder(new EmptyBorder(20, 20, 20, 20));
         add(buildHeader(), BorderLayout.NORTH);
         add(buildBody(),   BorderLayout.CENTER);
     }
@@ -81,6 +85,11 @@ public class ProductionPanel extends JPanel {
         titlePanel.add(title);
         titlePanel.add(subtitle);
         header.add(titlePanel, BorderLayout.WEST);
+        JPanel underline = new JPanel();
+underline.setBackground(GRID_LINE);
+underline.setPreferredSize(new Dimension(0, 1));
+header.add(underline, BorderLayout.SOUTH);
+header.setBorder(new EmptyBorder(0, 4, 18, 4));
         return header;
     }
 
@@ -110,7 +119,7 @@ public class ProductionPanel extends JPanel {
     private JPanel buildStepIndicator() {
         JPanel row = new JPanel(new GridLayout(1, 3, 20, 0));
         row.setOpaque(false);
-        row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 60));
+        row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 55));
 
         String[][] steps = {{"01","SELECT COFFEE"},{"02","INGREDIENTS"},{"03","PRODUCTION"}};
         for (int i = 0; i < 3; i++) {
@@ -131,7 +140,7 @@ public class ProductionPanel extends JPanel {
                 int myIdx = -1;
                 for (int i = 0; i < stepCards.length; i++) if (stepCards[i] == this) { myIdx = i; break; }
                 boolean act = (myIdx == currentStep);
-                g2.setColor(act ? ACCENT : Color.WHITE);
+                g2.setColor(act ? HEADER_BG : CARD_BG);
                 g2.fillRoundRect(0, 0, getWidth(), getHeight(), 20, 20);
                 g2.setColor(new Color(220, 215, 205));
                 g2.setStroke(new BasicStroke(1));
@@ -168,11 +177,11 @@ public class ProductionPanel extends JPanel {
             @Override protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g2.setColor(Color.WHITE);
-                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 40, 40);
-                g2.setColor(new Color(220, 215, 205));
-                g2.setStroke(new BasicStroke(1));
-                g2.drawRoundRect(0, 0, getWidth()-1, getHeight()-1, 40, 40);
+                g2.setColor(new Color(255, 252, 240));
+g2.fillRoundRect(0, 0, getWidth(), getHeight(), 16, 16);
+g2.setColor(new Color(200, 175, 120));
+g2.setStroke(new BasicStroke(1.5f));
+                g2.drawRoundRect(1, 1, getWidth()-2, getHeight()-2, 16, 16);
                 g2.dispose();
             }
         };
@@ -213,8 +222,8 @@ public class ProductionPanel extends JPanel {
         left.add(Box.createVerticalStrut(6));
         coffeeCombo = new JComboBox<>();
         for (CoffeeType ct : controller.getCoffeeTypes()) coffeeCombo.addItem(ct);
-        coffeeCombo.setMaximumSize(new Dimension(Integer.MAX_VALUE, 38));
-        coffeeCombo.setFont(new Font("SansSerif", Font.PLAIN, 14));
+        coffeeCombo.setMaximumSize(new Dimension(Integer.MAX_VALUE, 52));
+        coffeeCombo.setFont(new Font("SansSerif", Font.PLAIN, 20));
         coffeeCombo.setAlignmentX(Component.LEFT_ALIGNMENT);
         left.add(coffeeCombo);
         left.add(Box.createVerticalStrut(20));
@@ -223,7 +232,7 @@ public class ProductionPanel extends JPanel {
         left.add(Box.createVerticalStrut(6));
         JPanel tempRow = new JPanel(new GridLayout(1, 2, 10, 0));
         tempRow.setOpaque(false);
-        tempRow.setMaximumSize(new Dimension(Integer.MAX_VALUE, 38));
+        tempRow.setMaximumSize(new Dimension(Integer.MAX_VALUE, 52));
         tempRow.setAlignmentX(Component.LEFT_ALIGNMENT);
         JToggleButton btnHot  = toggleBtn("☀  Hot",  true);
         JToggleButton btnIced = toggleBtn("❄  Iced", false);
@@ -233,13 +242,13 @@ public class ProductionPanel extends JPanel {
         btnIced.addActionListener(e -> { selectedTemp = "Iced"; refreshMaxLabel(); });
         tempRow.add(btnHot); tempRow.add(btnIced);
         left.add(tempRow);
-        left.add(Box.createVerticalStrut(20));
+        left.add(Box.createVerticalStrut(30));
 
         left.add(formLabel("Cup Size:"));
         left.add(Box.createVerticalStrut(6));
         JPanel sizeRow = new JPanel(new GridLayout(1, 3, 10, 0));
         sizeRow.setOpaque(false);
-        sizeRow.setMaximumSize(new Dimension(Integer.MAX_VALUE, 38));
+        sizeRow.setMaximumSize(new Dimension(Integer.MAX_VALUE, 52));
         sizeRow.setAlignmentX(Component.LEFT_ALIGNMENT);
         JToggleButton btnSm = toggleBtn("Small",  false);
         JToggleButton btnMd = toggleBtn("Medium", true);
@@ -261,24 +270,24 @@ public class ProductionPanel extends JPanel {
         right.add(Box.createVerticalStrut(6));
         qtySpinner = new JSpinner(new SpinnerNumberModel(1, 1, 9999, 1));
         qtySpinner.setFont(new Font("SansSerif", Font.BOLD, 18));
-        qtySpinner.setMaximumSize(new Dimension(Integer.MAX_VALUE, 42));
+        qtySpinner.setMaximumSize(new Dimension(Integer.MAX_VALUE, 52));
         qtySpinner.setAlignmentX(Component.LEFT_ALIGNMENT);
         qtySpinner.addChangeListener(e -> refreshMaxLabel());
         right.add(qtySpinner);
-        right.add(Box.createVerticalStrut(16));
+        right.add(Box.createVerticalStrut(24));
 
         lblMaxProducible = new JLabel("Max producible: —");
         lblMaxProducible.setFont(new Font("Monospaced", Font.PLAIN, 13));
         lblMaxProducible.setForeground(TEXT_LIGHT);
         lblMaxProducible.setAlignmentX(Component.LEFT_ALIGNMENT);
         right.add(lblMaxProducible);
-        right.add(Box.createVerticalStrut(20));
+        right.add(Box.createVerticalStrut(30));
 
         right.add(formLabel("Order Type:"));
         right.add(Box.createVerticalStrut(6));
         JPanel orderRow = new JPanel(new GridLayout(1, 2, 10, 0));
         orderRow.setOpaque(false);
-        orderRow.setMaximumSize(new Dimension(Integer.MAX_VALUE, 38));
+        orderRow.setMaximumSize(new Dimension(Integer.MAX_VALUE, 52));
         orderRow.setAlignmentX(Component.LEFT_ALIGNMENT);
         JToggleButton btnDefault = toggleBtn("Default",    true);
         JToggleButton btnCustom  = toggleBtn("Customized", false);
@@ -380,8 +389,8 @@ public class ProductionPanel extends JPanel {
             for (int i = 0; i < orders.size(); i++) labels[i] = orders.get(i).label(i);
             JComboBox<String> orderSelector = new JComboBox<>(labels);
             orderSelector.setSelectedIndex(editingOrderIndex);
-            orderSelector.setFont(new Font("SansSerif", Font.PLAIN, 13));
-            orderSelector.setPreferredSize(new Dimension(320, 32));
+            orderSelector.setFont(new Font("SansSerif", Font.PLAIN, 15));
+            orderSelector.setPreferredSize(new Dimension(320, 45));
             orderSelector.addActionListener(e -> {
                 editingOrderIndex = orderSelector.getSelectedIndex();
                 rebuildStep2();
@@ -404,7 +413,7 @@ public class ProductionPanel extends JPanel {
                 ? new String[]{"INGREDIENT","UNIT","AMT / CUP","ADJUST"}
                 : new String[]{"INGREDIENT","UNIT","AMT / CUP"}) {
             JLabel hl = new JLabel(h);
-            hl.setFont(new Font("SansSerif", Font.BOLD, 11));
+            hl.setFont(new Font("SansSerif", Font.BOLD, 16));
             hl.setForeground(TEXT_LIGHT);
             colHdr.add(hl);
         }
@@ -425,19 +434,19 @@ public class ProductionPanel extends JPanel {
 
             JPanel row = new JPanel(new GridLayout(1, current.isCustomized ? 4 : 3, 0, 0));
             row.setOpaque(false);
-            row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 36));
+            row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 52));
             row.setBorder(new MatteBorder(0, 0, 1, 0, new Color(235, 228, 218)));
 
             JLabel lName = new JLabel(ing.getDisplayName());
-            lName.setFont(new Font("SansSerif", Font.PLAIN, 13));
+            lName.setFont(new Font("SansSerif", Font.PLAIN, 16));
             lName.setForeground(TEXT_DARK);
 
             JLabel lUnit = new JLabel(ing.getUnit());
-            lUnit.setFont(new Font("Monospaced", Font.PLAIN, 13));
+            lUnit.setFont(new Font("Monospaced", Font.PLAIN, 16));
             lUnit.setForeground(TEXT_LIGHT);
 
             JLabel lAmt = new JLabel(String.format("%.2f  (need %.2f)", amt * mult, needed));
-            lAmt.setFont(new Font("Monospaced", Font.PLAIN, 13));
+            lAmt.setFont(new Font("Monospaced", Font.PLAIN, 16));
             lAmt.setForeground(ok ? TEXT_DARK : RED_ERR);
 
             row.add(lName); row.add(lUnit); row.add(lAmt);
@@ -487,17 +496,17 @@ public class ProductionPanel extends JPanel {
             JComboBox<Ingredient> addCombo = new JComboBox<>();
             for (Ingredient ing : controller.getIngredients())
                 if (!current.recipe.containsKey(ing)) addCombo.addItem(ing);
-            addCombo.setFont(new Font("SansSerif", Font.PLAIN, 12));
+            addCombo.setFont(new Font("SansSerif", Font.PLAIN, 16));
             addCombo.setPreferredSize(new Dimension(160, 30));
 
             JSpinner addAmt = new JSpinner(new SpinnerNumberModel(1.0, 0.5, 9999.0, 0.5));
             addAmt.setPreferredSize(new Dimension(70, 30));
-            addAmt.setFont(new Font("SansSerif", Font.PLAIN, 12));
+            addAmt.setFont(new Font("SansSerif", Font.PLAIN, 16));
 
             JButton btnAddIng = new JButton("+ ADD");
             btnAddIng.setBackground(ACCENT);
             btnAddIng.setForeground(Color.WHITE);
-            btnAddIng.setFont(new Font("SansSerif", Font.BOLD, 11));
+            btnAddIng.setFont(new Font("SansSerif", Font.BOLD, 16));
             btnAddIng.setFocusable(false);
             btnAddIng.setBorder(new EmptyBorder(5, 10, 5, 10));
             btnAddIng.setCursor(new Cursor(Cursor.HAND_CURSOR));
@@ -512,7 +521,7 @@ public class ProductionPanel extends JPanel {
             });
 
             JLabel addLbl = new JLabel("Add ingredient:");
-            addLbl.setFont(new Font("SansSerif", Font.BOLD, 11));
+            addLbl.setFont(new Font("SansSerif", Font.BOLD, 16));
             addLbl.setForeground(TEXT_LIGHT);
             addRow.add(addLbl); addRow.add(addCombo);
             addRow.add(addAmt); addRow.add(btnAddIng);
@@ -596,7 +605,7 @@ public class ProductionPanel extends JPanel {
             JLabel orderLbl = new JLabel(
                 "Coffee " + (i+1) + "  —  " + o.coffeeType.getDisplayName()
                 + "  [" + o.size + ", " + o.temp + (o.isCustomized ? ", Custom" : "") + "]");
-            orderLbl.setFont(new Font("SansSerif", Font.BOLD, 12));
+            orderLbl.setFont(new Font("SansSerif", Font.BOLD, 16));
             orderLbl.setForeground(ACCENT);
             orderLbl.setAlignmentX(Component.LEFT_ALIGNMENT);
             breakdown.add(orderLbl);
@@ -620,7 +629,7 @@ public class ProductionPanel extends JPanel {
                 breakdown.add(row);
                 breakdown.add(Box.createVerticalStrut(2));
             }
-            breakdown.add(Box.createVerticalStrut(10));
+            breakdown.add(Box.createVerticalStrut(16));
         }
 
         JScrollPane scroll = new JScrollPane(breakdown);
@@ -696,7 +705,7 @@ public class ProductionPanel extends JPanel {
     private JToggleButton toggleBtn(String text, boolean selected) {
         JToggleButton b = new JToggleButton(text, selected);
         b.setFocusable(false);
-        b.setFont(new Font("SansSerif", Font.BOLD, 12));
+        b.setFont(new Font("SansSerif", Font.BOLD, 18));
         b.setBorder(BorderFactory.createLineBorder(new Color(210, 200, 185)));
         b.setCursor(new Cursor(Cursor.HAND_CURSOR));
         b.addChangeListener(e -> {
@@ -760,7 +769,7 @@ public class ProductionPanel extends JPanel {
 
     private void addSummaryCell(JPanel row, String text, int style, Color fg) {
         JLabel l = new JLabel(text);
-        l.setFont(new Font("Monospaced", style, 12));
+        l.setFont(new Font("Monospaced", style, 15));
         l.setForeground(fg);
         l.setBorder(new EmptyBorder(0, 2, 0, 2));
         row.add(l);

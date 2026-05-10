@@ -47,10 +47,11 @@ public class DatabaseManager {
             for (String entry : entries) {
                 entry = entry.replace("{","").replace("}","").trim();
                 if (entry.isEmpty()) continue;
-                int    id   = (int) Double.parseDouble(extractValue(entry, "id"));
-                String name = extractValue(entry, "name");
+                int    id       = (int) Double.parseDouble(extractValue(entry, "id"));
+                String name     = extractValue(entry, "name");
+                String category = extractValue(entry, "category"); // may be empty if column not yet added
                 Map<Ingredient, Double> recipe = loadRecipe(id, ingredients);
-                list.add(new CoffeeType(id, name, recipe));
+                list.add(new CoffeeType(id, name, category, recipe));
             }
             System.out.println("[DB] Coffee types loaded: " + list.size());
         } catch (Exception e) {
@@ -59,9 +60,47 @@ public class DatabaseManager {
         return list;
     }
 
+    //  LOAD CATEGORIES
+
+public static List<String> loadCategories() {
+    List<String> list = new ArrayList<>();
+    try {
+        String response = get("get_categories.php");
+        String[] entries = response.replace("[","").replace("]","").split("\\},\\{");
+        for (String entry : entries) {
+            entry = entry.replace("{","").replace("}","").trim();
+            if (entry.isEmpty()) continue;
+            String name = extractValue(entry, "name");
+            if (!name.isEmpty()) list.add(name);
+        }
+        System.out.println("[DB] Categories loaded: " + list.size());
+    } catch (Exception e) {
+        System.out.println("[DB] Could not load categories: " + e.getMessage());
+    }
+    return list;
+}
+
+public static void addCategory(String name) {
+    try {
+        post("add_category.php", "name=" + encode(name));
+        System.out.println("[DB] Category added: " + name);
+    } catch (Exception e) {
+        System.out.println("[DB] Could not add category: " + e.getMessage());
+    }
+}
+
+public static void removeCategory(String name) {
+    try {
+        post("remove_category.php", "name=" + encode(name));
+        System.out.println("[DB] Category removed: " + name);
+    } catch (Exception e) {
+        System.out.println("[DB] Could not remove category: " + e.getMessage());
+    }
+}
+
     private static Map<Ingredient, Double> loadRecipe(int coffeeTypeId,
                                                        List<Ingredient> ingredients) {
-        Map<Ingredient, Double> recipe = new HashMap<>();
+        Map<Ingredient, Double> recipe = new LinkedHashMap<>();
         try {
             String response = get("get_recipe.php?coffee_type_id=" + coffeeTypeId);
             String[] entries = response.replace("[","").replace("]","").split("\\},\\{");
@@ -111,12 +150,13 @@ public class DatabaseManager {
     }
 
 
-    //  ADD / REMOVE COFFEE TYPE
+    //  ADD / REMOVE / UPDATE COFFEE TYPE
 
 
-    public static void addCoffeeType(String name, Map<Integer, Double> recipe) {
+    public static void addCoffeeType(String name, String category, Map<Integer, Double> recipe) {
         try {
-            String response = post("add_coffee_type.php", "name=" + encode(name));
+            String response = post("add_coffee_type.php",
+                "name=" + encode(name) + "&category=" + encode(category));
             int newId = (int) Double.parseDouble(response.trim());
             for (Map.Entry<Integer, Double> entry : recipe.entrySet()) {
                 String params = "coffee_type_id=" + newId
@@ -130,12 +170,60 @@ public class DatabaseManager {
         }
     }
 
+    public static void updateCoffeeType(int id, String name, String category) {
+        try {
+            String params = "id=" + id
+                          + "&name="     + encode(name)
+                          + "&category=" + encode(category);
+            post("update_coffee_type.php", params);
+            System.out.println("[DB] Coffee type updated: id=" + id);
+        } catch (Exception e) {
+            System.out.println("[DB] Could not update coffee type: " + e.getMessage());
+        }
+    }
+
     public static void removeCoffeeType(int id) {
         try {
             post("remove_coffee_type.php", "id=" + id);
             System.out.println("[DB] Coffee type removed: id=" + id);
         } catch (Exception e) {
             System.out.println("[DB] Could not remove coffee type: " + e.getMessage());
+        }
+    }
+
+
+    //  ADD / UPDATE / REMOVE RECIPE ROW
+
+
+    public static void addRecipeRow(int coffeeTypeId, int ingredientId, double amount) {
+        try {
+            String params = "coffee_type_id=" + coffeeTypeId
+                          + "&ingredient_id=" + ingredientId
+                          + "&amount_per_cup=" + amount;
+            post("add_recipe.php", params);
+        } catch (Exception e) {
+            System.out.println("[DB] Could not add recipe row: " + e.getMessage());
+        }
+    }
+
+    public static void updateRecipeRow(int coffeeTypeId, int ingredientId, double amount) {
+        try {
+            String params = "coffee_type_id=" + coffeeTypeId
+                          + "&ingredient_id=" + ingredientId
+                          + "&amount_per_cup=" + amount;
+            post("update_recipe.php", params);
+        } catch (Exception e) {
+            System.out.println("[DB] Could not update recipe row: " + e.getMessage());
+        }
+    }
+
+    public static void removeRecipeRow(int coffeeTypeId, int ingredientId) {
+        try {
+            String params = "coffee_type_id=" + coffeeTypeId
+                          + "&ingredient_id=" + ingredientId;
+            post("remove_recipe.php", params);
+        } catch (Exception e) {
+            System.out.println("[DB] Could not remove recipe row: " + e.getMessage());
         }
     }
 
@@ -235,7 +323,8 @@ public class DatabaseManager {
         conn.setRequestMethod("GET");
         conn.setConnectTimeout(5000);
         conn.setReadTimeout(5000);
-        BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+        BufferedReader reader = new BufferedReader(
+            new InputStreamReader(conn.getInputStream()));
         StringBuilder sb = new StringBuilder();
         String line;
         while ((line = reader.readLine()) != null) sb.append(line);
@@ -253,7 +342,8 @@ public class DatabaseManager {
         try (OutputStream os = conn.getOutputStream()) {
             os.write(params.getBytes());
         }
-        BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+        BufferedReader reader = new BufferedReader(
+            new InputStreamReader(conn.getInputStream()));
         StringBuilder sb = new StringBuilder();
         String line;
         while ((line = reader.readLine()) != null) sb.append(line);

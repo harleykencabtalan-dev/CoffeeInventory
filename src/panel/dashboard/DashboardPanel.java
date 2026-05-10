@@ -140,7 +140,7 @@ public class DashboardPanel extends JPanel {
         JLabel nameLbl = new JLabel(ing.getDisplayName().toUpperCase());
         nameLbl.setFont(new Font("SansSerif", Font.PLAIN, 11));
         nameLbl.setForeground(TEXT_MID);
-        nameLbl.setPreferredSize(new Dimension(100, 20));
+        nameLbl.setPreferredSize(new Dimension(120, 20));
 
         final double fRatio = ratio;
         final Color  fBar   = barColor;
@@ -161,13 +161,14 @@ public class DashboardPanel extends JPanel {
         JLabel statusLbl = new JLabel(status);
         statusLbl.setFont(new Font("SansSerif", Font.BOLD, 10));
         statusLbl.setForeground(statusColor);
-        statusLbl.setPreferredSize(new Dimension(85, 20));
+        statusLbl.setPreferredSize(new Dimension(125, 20));
         statusLbl.setHorizontalAlignment(SwingConstants.RIGHT);
 
-        JPanel barWrap = new JPanel(new BorderLayout(4, 0));
+        JPanel barWrap = new JPanel(new BorderLayout(10, 0));
         barWrap.setOpaque(false);
         barWrap.add(barBg,     BorderLayout.CENTER);
         barWrap.add(statusLbl, BorderLayout.EAST);
+         barWrap.setBorder(new EmptyBorder(0, 20, 0, 20));
 
         row.add(nameLbl, BorderLayout.WEST);
         row.add(barWrap, BorderLayout.CENTER);
@@ -515,28 +516,36 @@ public class DashboardPanel extends JPanel {
         bar.setBorder(new EmptyBorder(9, 12, 9, 12));
 
         JLabel left = new JLabel(leftCol);
-        left.setFont(new Font("SansSerif", Font.BOLD, 11));
+        left.setFont(new Font("SansSerif", Font.BOLD, 14));
         left.setForeground(Color.WHITE);
         bar.add(left);
 
         for (String col : rightCols) {
-            JLabel lbl = new JLabel(col);
-            lbl.setFont(new Font("SansSerif", Font.BOLD, 11));
-            lbl.setForeground(Color.WHITE);
-            bar.add(lbl);
-        }
+    JLabel lbl = new JLabel(col);
+    lbl.setFont(new Font("SansSerif", Font.BOLD, 14));
+    lbl.setForeground(Color.WHITE);
+   
+    if (col.equalsIgnoreCase("STATUS")) {
+        lbl.setHorizontalAlignment(SwingConstants.RIGHT);
+    }
+    
+    bar.add(lbl);
+}
         return bar;
     }
 
-    private JLabel sectionTitle(String text) {
-        JLabel lbl = new JLabel("<html><b>" + text + "</b></html>");
-        lbl.setFont(new Font("SansSerif", Font.BOLD, 12));
-        lbl.setForeground(GOLD_DARK);
-        lbl.setBackground(new Color(235, 220, 180));
-        lbl.setOpaque(true);
-        lbl.setBorder(new EmptyBorder(9, 12, 9, 12));
-        return lbl;
-    }
+    private JPanel sectionTitle(String text) {
+    JPanel bar = new JPanel(new BorderLayout());
+    bar.setBackground(HEADER_BG);
+    bar.setBorder(new EmptyBorder(12, 12, 12, 12));
+
+    JLabel lbl = new JLabel(text);
+    lbl.setFont(new Font("SansSerif", Font.BOLD, 14 )); // Matches header font size
+    lbl.setForeground(Color.WHITE);
+    
+    bar.add(lbl, BorderLayout.WEST);
+    return bar;
+}
 
     /** Thin visible separator between rows */
     private JPanel gridLine() {
