@@ -9,6 +9,7 @@ import panel.logs.LogsPanel;
 import panel.inventory.InventoryPanel;
 import panel.production.ProductionPanel;
 import panel.refill.RefillPanel;
+import panel.variance.VariancePanel;
 import panel.ingredients.IngredientsPanel;
 
 
@@ -36,6 +37,7 @@ public class ConsoleUI {
     private InventoryPanel   inventoryPanel;
     private IngredientsPanel ingredientsPanel;   
     private CustomizationPanel customizationPanel;
+    private VariancePanel variancePanel;
 
     // ─── Active nav button tracking ──────────────────────────────────────────
     private JButton activeBtn  = null;
@@ -117,16 +119,7 @@ public class ConsoleUI {
                 g2.dispose();
             }
         };
-        statusPill.setOpaque(false);
-        statusPill.setBorder(new EmptyBorder(3, 8, 3, 10));
-        JLabel dot = new JLabel("●");
-        dot.setFont(new Font("SansSerif", Font.PLAIN, 9));
-        dot.setForeground(GREEN_DOT);
-        JLabel statusTxt = new JLabel("SYSTEM ONLINE");
-        statusTxt.setFont(new Font("SansSerif", Font.BOLD, 10));
-        statusTxt.setForeground(new Color(40, 120, 40));
-        statusPill.add(dot);
-        statusPill.add(statusTxt);
+        
 
         JPanel underline = new JPanel();
         underline.setBackground(GOLD_LIGHT);
@@ -235,6 +228,7 @@ if (label.equals("CUSTOMIZATION") && customizationPanel != null) customizationPa
                 case "INGREDIENTS"    -> { ingredientsPanel = new IngredientsPanel(inventoryManager); yield ingredientsPanel; }
                 case "REPORTS / LOGS" -> new LogsPanel(inventoryManager);
                 case "CUSTOMIZATION" -> { customizationPanel = new CustomizationPanel(inventoryManager); yield customizationPanel; }
+                case "VARIANCE AUDIT" -> {variancePanel = new VariancePanel (inventoryManager); yield variancePanel;}
                 default               -> createPlaceholder(label);
             };
         } catch (Exception ex) {

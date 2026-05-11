@@ -271,7 +271,45 @@ public static void removeCategory(String name) {
         }
     }
 
+// ─── ADD THESE TWO METHODS TO DatabaseManager.java ───────────────────────────
+// Place them alongside the other public static methods (e.g. after logRefill)
 
+    public static void saveAudit(Ingredient ingredient, double physical,
+                                  double variance, String status) {
+        try {
+            String params = "ingredient=" + encode(ingredient.getDisplayName())
+                          + "&physical="  + physical
+                          + "&variance="  + variance
+                          + "&status="    + encode(status);
+            post("save_audit.php", params);
+            System.out.println("[DB] Audit saved: " + ingredient.getDisplayName());
+        } catch (Exception e) {
+            System.out.println("[DB] Could not save audit: " + e.getMessage());
+        }
+    }
+
+    public static List<String> loadAuditHistory() {
+        List<String> list = new ArrayList<>();
+        try {
+            String response = get("get_audit_history.php");
+            String[] entries = response.replace("[","").replace("]","").split("\\},\\{");
+            for (String entry : entries) {
+                entry = entry.replace("{","").replace("}","").trim();
+                if (entry.isEmpty()) continue;
+                String ingredient = extractValue(entry, "ingredient");
+                String physical   = extractValue(entry, "physical_stock");
+                String variance   = extractValue(entry, "variance");
+                String status     = extractValue(entry, "status");
+                String time       = extractValue(entry, "audited_at");
+                list.add(String.format("[%s]  %-18s  physical: %s  variance: %s  [%s]",
+                    time, ingredient, physical, variance, status));
+            }
+            System.out.println("[DB] Audit history loaded: " + list.size());
+        } catch (Exception e) {
+            System.out.println("[DB] Could not load audit history: " + e.getMessage());
+        }
+        return list;
+    }
     //  LOAD LOGS
 
 

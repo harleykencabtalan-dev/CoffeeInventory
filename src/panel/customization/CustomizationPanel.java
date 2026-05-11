@@ -67,7 +67,7 @@ public class CustomizationPanel extends JPanel {
         titleBlock.add(title);
         titleBlock.add(subtitle);
 
-        JButton btnAdd = new JButton("+ Add New Flavor") {
+        JButton btnAdd = new JButton("+ Add New Drink") {
             @Override protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
@@ -87,8 +87,22 @@ public class CustomizationPanel extends JPanel {
         btnAdd.setBorder(new EmptyBorder(10, 20, 10, 20));
         btnAdd.addActionListener(e -> showAddDialog());
 
-        JPanel rightWrap = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
+        JButton btnManageCats = new JButton("⚙ Categories");
+        btnManageCats.setOpaque(false);
+        btnManageCats.setContentAreaFilled(false);
+        btnManageCats.setBorderPainted(true);
+        btnManageCats.setForeground(GOLD_DARK);
+        btnManageCats.setFont(new Font("SansSerif", Font.BOLD, 14));
+        btnManageCats.setFocusable(false);
+        btnManageCats.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btnManageCats.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(GOLD_DARK, 1, true),
+            new EmptyBorder(9, 18, 9, 18)));
+        btnManageCats.addActionListener(e -> showManageCategoriesDialog());
+
+        JPanel rightWrap = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
         rightWrap.setOpaque(false);
+        rightWrap.add(btnManageCats);
         rightWrap.add(btnAdd);
 
         JPanel underline = new JPanel();
@@ -245,7 +259,7 @@ public class CustomizationPanel extends JPanel {
     //  ADD DIALOG
     // ═════════════════════════════════════════════════════════════════════════
     private void showAddDialog() {
-        JDialog dlg  = makeDialog("Add New Flavor");
+        JDialog dlg  = makeDialog("Add New Coffee");
         JPanel  form = dialogForm();
 
         JTextField        tfName = styledField();
@@ -309,7 +323,7 @@ public class CustomizationPanel extends JPanel {
         form.add(recipeList);
 
         form.add(Box.createVerticalStrut(18));
-        JButton btnSave = confirmBtn("SAVE FLAVOR");
+        JButton btnSave = confirmBtn("SAVE DRINK");
         btnSave.addActionListener(e -> {
             String err = controller.addCoffeeType(
                 tfName.getText(),
@@ -453,6 +467,135 @@ public class CustomizationPanel extends JPanel {
             rebuildTable();
         });
         form.add(btnSave);
+
+        JScrollPane sp = new JScrollPane(form);
+        sp.setBorder(null);
+        sp.setOpaque(false);
+        sp.getViewport().setOpaque(false);
+        dlg.add(sp);
+        dlg.setVisible(true);
+    }
+
+    // ═════════════════════════════════════════════════════════════════════════
+    //  MANAGE CATEGORIES DIALOG
+    // ═════════════════════════════════════════════════════════════════════════
+    private void showManageCategoriesDialog() {
+        JDialog dlg = makeDialog("Manage Categories");
+        JPanel form = dialogForm();
+
+        // Live list panel
+        JPanel listPanel = new JPanel();
+        listPanel.setLayout(new BoxLayout(listPanel, BoxLayout.Y_AXIS));
+        listPanel.setOpaque(false);
+
+        // Refresh helper (declared as array so lambda can capture it)
+        Runnable[] refreshList = new Runnable[1];
+        refreshList[0] = () -> {
+            listPanel.removeAll();
+            List<String> cats = controller.getCategories();
+            if (cats.isEmpty()) {
+                JLabel empty = new JLabel("No categories yet.");
+                empty.setFont(new Font("SansSerif", Font.ITALIC, 13));
+                empty.setForeground(TEXT_LIGHT);
+                empty.setAlignmentX(Component.LEFT_ALIGNMENT);
+                listPanel.add(empty);
+            } else {
+                for (String cat : cats) {
+                    JPanel row = new JPanel(new BorderLayout(8, 0));
+                    row.setOpaque(false);
+                    row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 36));
+                    row.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+                    JLabel lbl = new JLabel("• " + cat);
+                    lbl.setFont(new Font("SansSerif", Font.PLAIN, 13));
+                    lbl.setForeground(TEXT_DARK);
+
+                    JButton btnRem = new JButton("✕");
+                    btnRem.setFont(new Font("SansSerif", Font.BOLD, 10));
+                    btnRem.setForeground(RED_ERR);
+                    btnRem.setBackground(CARD_BG);
+                    btnRem.setBorder(new EmptyBorder(2, 6, 2, 6));
+                    btnRem.setFocusable(false);
+                    btnRem.setCursor(new Cursor(Cursor.HAND_CURSOR));
+                    btnRem.addActionListener(ev -> {
+                        int confirm = JOptionPane.showConfirmDialog(dlg,
+                            "Remove category \"" + cat + "\"?",
+                            "Confirm", JOptionPane.YES_NO_OPTION);
+                        if (confirm == JOptionPane.YES_OPTION) {
+                            controller.removeCategory(cat);
+                            refreshList[0].run();
+                            listPanel.revalidate();
+                            listPanel.repaint();
+                        }
+                    });
+
+                    row.add(lbl, BorderLayout.CENTER);
+                    row.add(btnRem, BorderLayout.EAST);
+                    listPanel.add(row);
+                    listPanel.add(Box.createVerticalStrut(4));
+                }
+            }
+            listPanel.revalidate();
+            listPanel.repaint();
+        };
+        refreshList[0].run();
+
+        // Add-new-category row
+        JTextField tfNewCat = styledField();
+        tfNewCat.putClientProperty("JTextField.placeholderText", "e.g. Frappe, Tea, Milk Tea…");
+
+        JButton btnAddCat = new JButton("+ Add");
+        btnAddCat.setBackground(HEADER_BG);
+        btnAddCat.setForeground(Color.WHITE);
+        btnAddCat.setFont(new Font("SansSerif", Font.BOLD, 12));
+        btnAddCat.setFocusable(false);
+        btnAddCat.setBorder(new EmptyBorder(6, 14, 6, 14));
+        btnAddCat.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btnAddCat.addActionListener(e -> {
+            String name = tfNewCat.getText().trim();
+            if (name.isBlank()) {
+                JOptionPane.showMessageDialog(dlg, "Category name cannot be empty.",
+                    "Validation Error", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            // Duplicate check (case-insensitive)
+            boolean exists = false;
+            for (String c : controller.getCategories()) {
+                if (c.equalsIgnoreCase(name)) { exists = true; break; }
+            }
+            if (exists) {
+                JOptionPane.showMessageDialog(dlg,
+                    "Category \"" + name + "\" already exists.",
+                    "Validation Error", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            controller.addCategory(name);
+            tfNewCat.setText("");
+            refreshList[0].run();
+        });
+
+        JPanel addRow = new JPanel(new BorderLayout(8, 0));
+        addRow.setOpaque(false);
+        addRow.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
+        addRow.setAlignmentX(Component.LEFT_ALIGNMENT);
+        addRow.add(tfNewCat,  BorderLayout.CENTER);
+        addRow.add(btnAddCat, BorderLayout.EAST);
+
+        form.add(dialogLabel("CATEGORIES"));
+        form.add(Box.createVerticalStrut(8));
+        form.add(listPanel);
+        form.add(Box.createVerticalStrut(16));
+        form.add(dialogLabel("ADD NEW CATEGORY"));
+        form.add(Box.createVerticalStrut(6));
+        form.add(addRow);
+        form.add(Box.createVerticalStrut(18));
+
+        JButton btnDone = confirmBtn("DONE");
+        btnDone.addActionListener(e -> {
+            dlg.dispose();
+            rebuildTable(); // refresh table in case categories changed
+        });
+        form.add(btnDone);
 
         JScrollPane sp = new JScrollPane(form);
         sp.setBorder(null);
